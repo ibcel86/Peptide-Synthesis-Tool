@@ -31,3 +31,5 @@ def build_synthesis_plan(tokens, vial_map, max_per_vial=6) takes the above funti
 def process_sequence() is all of the tkinter outputs and inputs
 
 All of this codes takes a peptide sequence and gives the scientists the amount of each individual amino acid they need, the occurence of each in a sequence so that a synthesis plan can be devised, and then outputs the vial order required to synthesise the peptide on the automatic peptide synthesiser. 
+
+To create the .exe file run pyinstaller. The .exe file is 33 mB and the upload limit is 25 mB. The python script is available in files.

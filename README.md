@@ -1,4 +1,4 @@
-The Sequence Calculator 
+# The Sequence Calculator 
 
 When developing novel peptide compounds in drug discovery, scientists have to manually calculate the concentration, volume, and mass of each individual amino acid in the sequence. For short peptides this is not a problem, but for very long peptides (100 mer or more) this ia time consuming task which if mistakes are made, can cost scientists weeks. 
 
@@ -14,7 +14,7 @@ The amino_acid.csv file is kept separate from the .exe but in the same directory
 Due to un-natural amino acids not having a single letter designation, they are put in as Pra for example. This means that the sequence must be put in with spaces between each amino acid letter: T T V Q I Pra P R A instead of TTVQIPraPRA because Pra and P R A are seen as the same thing and so the code has been written to strip spaces between the letters to capture
 the three letter un-natural amino acids. (Note, this can be adapted for three letter codons as well).
 
-Inner workings
+## Inner workings
 
 def resource_path(relative_path) checks that the csv file is located in the same directory as the .exe file
 

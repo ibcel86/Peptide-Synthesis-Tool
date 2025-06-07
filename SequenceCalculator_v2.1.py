@@ -19,14 +19,19 @@ class LoadFile:
 
 path = LoadFile.get_csv_path()
 
-class CalculatePeptide:
-    '''Creates a set for the amino acids for quick look up, validates user input and calculates peptide mass'''
-    
-    def __init__(self, tokens=None):
-        """Load CSV file once when the class is instantiated"""
+class DataLoader:
+    '''Shared data access for amino acid information'''
+    def __init__(self):
         self.df = pd.read_csv(path)
         self.valid_amino_acids = set(self.df['AA'].str.strip())
-        self.tokens = tokens
+        self.mw_dict = dict(zip(self.df['AA'], self.df['MW']))
+
+class CalculatePeptide:
+    '''Validates user input and calculates peptide mass'''
+    
+    def __init__(self):
+        self.data = DataLoader()
+        self.tokens = None
     
     def validate_user_sequence(self):
         '''Validates user sequence. Input gives example of how the user should input the sequence'''
@@ -37,7 +42,7 @@ class CalculatePeptide:
         self.tokens = [aa.strip() for aa in user_sequence.split()][::-1]
             
         # Finds invalid amino acids: those that are not in the valid set
-        invalid_amino_acids = [aa for aa in self.tokens if aa not in self.valid_amino_acids]
+        invalid_amino_acids = [aa for aa in self.tokens if aa not in self.data.valid_amino_acids]
               
         if ' ' not in user_sequence:
             raise ValueError(f"Check peptide sequence has spaces between letters")
@@ -48,19 +53,24 @@ class CalculatePeptide:
 
     def calculate_sequence_mass(self):
         """Calculate mass of the sequence using the loaded DataFrame"""
-        find_masses = dict(zip(self.df['AA'], self.df['MW']))
-        validated_sequence_mass = sum(find_masses[aa] for aa in self.tokens)
+        if not self.tokens:
+            raise ValueError("No sequence loaded. Run validate_user_sequence() first.")
+        
+        validated_sequence_mass = sum(self.data.mw_dict[aa] for aa in self.tokens)
         return f'Your peptide is {len(self.tokens)} amino acids long with a mass of {validated_sequence_mass} g/mol'
+
+class VialRack:
+    '''Calculates vial positions and rack assignments for amino acids'''
     
-class VialRack(CalculatePeptide):
-    def __init__(self, tokens=None):
-        super().__init__(tokens)
+    def __init__(self, tokens):
+        self.data = DataLoader()
+        self.tokens = tokens
         
     def vial_rack_positions(self, conc=0.4, max_occurrence=6, max_volume=16):
         '''Finds the number of occurrences for each amino acid to find how many vials
         and racks are needed based on vial size and concentration. Builds a map of vials and assigns
         vials to a specific rack'''
-        find_mws = dict(zip(self.df['AA'], self.df['MW']))
+        
         amino_acid_occurrences = Counter(self.tokens)
         max_per_vial = floor((max_volume - 1) / 2.5)
         
@@ -72,7 +82,7 @@ class VialRack(CalculatePeptide):
         max_positions = 27
 
         for aa, count in amino_acid_occurrences.items():
-            mw = find_mws[aa]
+            mw = self.data.mw_dict[aa]
 
             if count <= max_per_vial:
                 splits = [count]
@@ -109,17 +119,20 @@ class VialRack(CalculatePeptide):
                     position = 1
 
         return pd.DataFrame(output), vial_map
+    
+class BuildSynthesisPlan():
+    pass
 
 
 ### Debugging print methods - delete once script works ###
 
-# Create an instance of the class (CSV is loaded once here)
-vial_rack_positions = VialRack()
+calc = CalculatePeptide()
+amino_acids = calc.validate_user_sequence()  # Gets tokens from user input
+sequence_mass = calc.calculate_sequence_mass()
 
-# Now use the instance methods
-amino_acids = vial_rack_positions.validate_user_sequence()
-sequence_mass = vial_rack_positions.calculate_sequence_mass()
-df, vial_map = vial_rack_positions.vial_rack_positions()
+vial_rack = VialRack(calc.tokens)
+df, vial_map = vial_rack.vial_rack_positions()
+
 print(amino_acids)
 print(sequence_mass)
 print(df.to_string(index=False))

@@ -58,9 +58,9 @@ class CalculatePeptide:
             raise ValueError("No sequence loaded. Run validate_user_sequence() first.")
         
         validated_sequence_mass = sum(self.data.mw_dict[aa] for aa in self.tokens)
-        return f'Your peptide is {len(self.tokens)} amino acids long with a mass of {validated_sequence_mass} g/mol'
+        return f'Your peptide is {len(self.tokens)} amino acids long with a mass of {validated_sequence_mass:.2f} g/mol'
 
-class VialRack:
+class BuildSynthesisPlan():
     '''Calculates vial positions and rack assignments for amino acids'''
     
     def __init__(self, tokens):
@@ -120,8 +120,6 @@ class VialRack:
                     position = 1
 
         return pd.DataFrame(output), vial_map
-    
-class BuildSynthesisPlan():
 
     def __init__(self, tokens):
         self.data = DataLoader()
@@ -170,9 +168,8 @@ calc = CalculatePeptide()
 amino_acids = calc.validate_user_sequence()  # Gets tokens from user input
 sequence_mass = calc.calculate_sequence_mass()
 
-vial_rack = VialRack(calc.tokens)
-df, vial_map = vial_rack.vial_rack_positions()
 synth_plan = BuildSynthesisPlan(calc.tokens)
+df, vial_map = synth_plan.vial_rack_positions()
 df_synth_plan = synth_plan.build_synthesis_plan()
 
 print(amino_acids)

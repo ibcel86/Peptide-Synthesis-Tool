@@ -2,6 +2,7 @@ import os
 import sys
 import token
 import pandas as pd
+import openpyxl
 from math import *
 from collections import Counter
 
@@ -119,11 +120,8 @@ class BuildSynthesisPlan():
                     rack += 1
                     position = 1
 
+        
         return pd.DataFrame(output), vial_map
-
-    def __init__(self, tokens):
-        self.data = DataLoader()
-        self.tokens = tokens
     
     def build_synthesis_plan(self):
         
@@ -159,8 +157,14 @@ class BuildSynthesisPlan():
                     "Position": None,
                 })
 
+        
         return pd.DataFrame(synthesis_rows)
 
+
+    with pd.DataFrame.to_excel("Synthesis Plan.xlsx") as writer:
+        vial_rack_positions.to_excel(writer, sheet_name="Vial Plan", index=False)
+        build_synthesis_plan.to_excel(writer, sheet_name="Synthesis Plan", index=False)
+        
 
 ### Debugging print methods - delete once script works ###
 

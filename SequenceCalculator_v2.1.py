@@ -1,5 +1,6 @@
 import os
 import sys
+import token
 import pandas as pd
 from math import *
 from collections import Counter
@@ -121,7 +122,46 @@ class VialRack:
         return pd.DataFrame(output), vial_map
     
 class BuildSynthesisPlan():
-    pass
+
+    def __init__(self, tokens):
+        self.data = DataLoader()
+        self.tokens = tokens
+    
+    def build_synthesis_plan(self):
+        
+        synthesis_rows = []
+        vial_usage_counter = {}  
+
+        for aa in self.tokens:
+
+            related_vials = [v for v in vial_map if v.startswith(aa)]
+
+            # Assign occurrence to first vial that still has capacity
+            assigned = False
+            for vial_name in related_vials:
+                rack, pos, occ = vial_map[vial_name]
+                used = vial_usage_counter.get(vial_name, 0)
+
+                if used < occ:
+                    vial_usage_counter[vial_name] = used + 1
+                    synthesis_rows.append({
+                        "Amino Acid": aa,
+                        "Vial": vial_name,
+                        "Rack": rack,
+                        "Position": pos,
+                    })
+                    assigned = True
+                    break
+            if not assigned:
+                # fallback: no vial found or all full — unlikely if logic correct
+                synthesis_rows.append({
+                    "Amino Acid": aa,
+                    "Vial": "UNKNOWN",
+                    "Rack": None,
+                    "Position": None,
+                })
+
+        return pd.DataFrame(synthesis_rows)
 
 
 ### Debugging print methods - delete once script works ###
@@ -132,7 +172,10 @@ sequence_mass = calc.calculate_sequence_mass()
 
 vial_rack = VialRack(calc.tokens)
 df, vial_map = vial_rack.vial_rack_positions()
+synth_plan = BuildSynthesisPlan(calc.tokens)
+df_synth_plan = synth_plan.build_synthesis_plan()
 
 print(amino_acids)
 print(sequence_mass)
 print(df.to_string(index=False))
+print(df_synth_plan.to_string(index=False))

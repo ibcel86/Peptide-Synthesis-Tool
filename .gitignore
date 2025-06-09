@@ -2,7 +2,7 @@
 venv/
 
 # Ignore test folders
-Sequence Tests/
+Sequences Test/
 Archive/
 
 # Ignore Python cache files

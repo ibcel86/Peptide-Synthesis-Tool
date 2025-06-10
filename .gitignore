@@ -20,3 +20,7 @@ Thumbs.db
 
 # Ignore env/secret files
 .env
+
+# Ignore files
+.csv
+.xlsx

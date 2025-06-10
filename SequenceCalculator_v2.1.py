@@ -124,39 +124,37 @@ class BuildSynthesisPlan():
         df_output = pd.DataFrame(output)
         return df_output, vial_map
     
-    def build_synthesis_plan(self, vial_map):
+    def calculate_deprotection_vials_needed(self, max_volume=16, inject_vol=1.5):
+        '''Calculate the number of deprotection vials needed based on peptide length and max vial volume'''
+
+        num_deprotection_steps = len(self.tokens)
+        samples_per_vial = ceil(max_volume / inject_vol)
+        num_vials_needed= ceil(num_deprotection_steps/samples_per_vial)
         
-        # Get user input for number of deprotection vials
+        print(f"Peptide length: {num_deprotection_steps} amino acids")
+        print(f"Number of deprotection vials required: {num_vials_needed} vials")
+        print(f"Volume per deprotection vial: {max_volume} mL")
+        
+        return num_vials_needed
+    
+    def build_synthesis_plan(self, vial_map, max_deprotection_volume=16):
+        
+        # Calculate required deprotection vials automatically
+        num_deprotection_vials = self.calculate_deprotection_vials_needed(max_deprotection_volume)
+        
         deprotection_start_pos = 28
         deprotection_rack = 2
         rack2_start_pos = 28
-        rack2_end_pos = 54  # Assuming rack 2 has 27 positions (28-54)
+        rack2_end_pos = 54
         
-        while True:
-            try:
-                num_deprotection_vials = int(input("How many deprotection vials do you want to use? "))
-                if num_deprotection_vials > 0:
-                    # Check if requested vials exceed available rack space
-                    last_position_needed = deprotection_start_pos + num_deprotection_vials - 1
-                    if last_position_needed > rack2_end_pos:
-                        available_positions = rack2_end_pos - deprotection_start_pos + 1
-                        print(f"WARNING: Rack 2 has positions {rack2_start_pos}-{rack2_end_pos}.")
-                        print(f"Starting from position {deprotection_start_pos}, you can only use {available_positions} vials maximum.")
-                        print(f"You requested {num_deprotection_vials} vials, but only {available_positions} positions are available.")
-                        
-                        continue_choice = input("Do you want to continue with the maximum available vials? (y/n): ").lower()
-                        if continue_choice == 'y':
-                            num_deprotection_vials = available_positions
-                            print(f"Proceeding with {num_deprotection_vials} deprotection vials.")
-                            break
-                        else:
-                            continue
-                    else:
-                        break
-                else:
-                    print("Please enter a positive number.")
-            except ValueError:
-                print("Please enter a valid number.")
+        # Check if we have enough rack space for deprotection vials
+        last_position_needed = deprotection_start_pos + num_deprotection_vials - 1
+        if last_position_needed > rack2_end_pos:
+            available_positions = rack2_end_pos - deprotection_start_pos + 1
+            print(f"ERROR: Not enough rack space for deprotection vials!")
+            print(f"Rack 2 has positions {rack2_start_pos}-{rack2_end_pos}.")
+            print(f"Need {num_deprotection_vials} vials but only {available_positions} positions available.")
+            raise ValueError("Insufficient rack space for required deprotection vials")
         
         synthesis_rows = []
         vial_usage_counter = {}  
@@ -166,9 +164,13 @@ class BuildSynthesisPlan():
         # Build list of deprotection vial positions
         deprotection_positions = []
         for i in range(num_deprotection_vials):
-            deprotection_positions.append(deprotection_start_pos + i)  # Assuming sequential positions
+            deprotection_positions.append(deprotection_start_pos + i)
         
         print(f"Using {num_deprotection_vials} deprotection vials at positions: {deprotection_positions}")
+        
+        # Calculate how many uses per deprotection vial
+        uses_per_deprotection_vial = ceil(len(self.tokens) / num_deprotection_vials)
+        print(f"Each deprotection vial will be used approximately {uses_per_deprotection_vial} times")
 
         for position, aa in enumerate(self.tokens, 1):  # Start counting from 1
             # Find all related vials for this amino acid (including split vials)
@@ -206,23 +208,21 @@ class BuildSynthesisPlan():
                         "MANUAL CLEAN (ml)": 4
                     })
                     
-                    # Determine which deprotection vial to use (every 10 uses, move to next vial)
-                    deprotection_vial_index = deprotection_usage_counter // 10
+                    # Determine which deprotection vial to use based on step distribution
+                    deprotection_vial_index = deprotection_usage_counter // uses_per_deprotection_vial
                     if deprotection_vial_index >= len(deprotection_positions):
                         deprotection_vial_index = len(deprotection_positions) - 1  # Use last vial if we exceed
                     
                     current_deprotection_pos = deprotection_positions[deprotection_vial_index]
                     
-                    # Add deprotection step immediately after
                     synthesis_rows.append({
                         "NAME": f"deprotection {step_counter}",
                         "FLOW RATE A (ml/min)": 0,
                         "FLOW RATE B (ml/min)": 0,
                         "FLOW RATE D (ml/min)": 0.8,
                         "RESIDENCE 2": True,
-                        "AUTOSAMPLER SITE A": 1,
+                        "AUTOSAMPLER SITE A": current_deprotection_pos,
                         "REAGENT CONC A (M)": 0.1,
-                        "AUTOSAMPLER SITE B": current_deprotection_pos,
                         "REAGENT CONC B (M)": 0.1,
                         "DO NOT FILL": False,
                         "REAGENT USE (ml)": 4,
@@ -265,7 +265,7 @@ class BuildSynthesisPlan():
         df_synthesis_plan = pd.DataFrame(synthesis_rows)
         return df_synthesis_plan
 
-### Debugging print methods - delete once script works ###
+### Main execution ###
 
 calc = CalculatePeptide()
 amino_acids = calc.validate_user_sequence()  # Gets tokens from user input
@@ -276,7 +276,6 @@ df_vial_plan, vial_map = synth_plan.vial_rack_positions()
 df_synth_plan = synth_plan.build_synthesis_plan(vial_map)
 
 # Export as separate csv files
-
 df_vial_plan.to_csv("Vial_Plan.csv", index=False)
 df_synth_plan.to_csv("Synthesis_Plan.csv", index=False)
 

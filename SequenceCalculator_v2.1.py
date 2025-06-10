@@ -120,10 +120,10 @@ class BuildSynthesisPlan():
                     rack += 1
                     position = 1
 
-        
-        return pd.DataFrame(output), vial_map
+        df_output = pd.DataFrame(output)
+        return df_output, vial_map
     
-    def build_synthesis_plan(self):
+    def build_synthesis_plan(self, vial_map):
         
         synthesis_rows = []
         vial_usage_counter = {}  
@@ -157,14 +157,10 @@ class BuildSynthesisPlan():
                     "Position": None,
                 })
 
-        
-        return pd.DataFrame(synthesis_rows)
+    
+        df_synthesis_plan = pd.DataFrame(synthesis_rows)
+        return df_synthesis_plan
 
-
-    with pd.DataFrame.to_excel("Synthesis Plan.xlsx") as writer:
-        vial_rack_positions.to_excel(writer, sheet_name="Vial Plan", index=False)
-        build_synthesis_plan.to_excel(writer, sheet_name="Synthesis Plan", index=False)
-        
 
 ### Debugging print methods - delete once script works ###
 
@@ -173,10 +169,16 @@ amino_acids = calc.validate_user_sequence()  # Gets tokens from user input
 sequence_mass = calc.calculate_sequence_mass()
 
 synth_plan = BuildSynthesisPlan(calc.tokens)
-df, vial_map = synth_plan.vial_rack_positions()
-df_synth_plan = synth_plan.build_synthesis_plan()
+df_vial_plan, vial_map = synth_plan.vial_rack_positions()
+df_synth_plan = synth_plan.build_synthesis_plan(vial_map)
+
+# Export to Excel
+
+with pd.ExcelWriter("Synthesis Plan.xlsx") as writer:
+    df_vial_plan.to_excel(writer, sheet_name="Vial Plan", index=False)
+    df_synth_plan.to_excel(writer, sheet_name="Synthesis Plan", index=False)
 
 print(amino_acids)
 print(sequence_mass)
-print(df.to_string(index=False))
+print(df_vial_plan.to_string(index=False))
 print(df_synth_plan.to_string(index=False))

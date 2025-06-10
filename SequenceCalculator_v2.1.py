@@ -136,9 +136,9 @@ class BuildSynthesisPlan():
         print(f"Volume per deprotection vial: {max_volume} mL")
         
         return num_vials_needed
-    
+       
     def build_synthesis_plan(self, vial_map, max_deprotection_volume=16):
-        
+
         # Calculate required deprotection vials automatically
         num_deprotection_vials = self.calculate_deprotection_vials_needed(max_deprotection_volume)
         
@@ -158,7 +158,6 @@ class BuildSynthesisPlan():
         
         synthesis_rows = []
         vial_usage_counter = {}  
-        step_counter = 1  # Counter for deprotection steps
         deprotection_usage_counter = 0  # Track how many times we've used deprotection reagent
         
         # Build list of deprotection vial positions
@@ -175,11 +174,15 @@ class BuildSynthesisPlan():
         for position, aa in enumerate(self.tokens, 1):  # Start counting from 1
             # Find all related vials for this amino acid (including split vials)
             related_vials = [v for v in vial_map.keys() if v == aa or v.startswith(aa) and v[len(aa):].isdigit()]
-    
-            # Sort to ensure we use vials in order (aa, aa1, aa2, etc.)
             related_vials.sort(key=lambda x: (0 if x == aa else int(x[len(aa):])))
 
-            # Assign occurrence to first vial that still has capacity
+            # Deprotection vial selection - calculate BEFORE processing amino acid
+            deprotection_vial_index = deprotection_usage_counter // uses_per_deprotection_vial
+            if deprotection_vial_index >= len(deprotection_positions):
+                deprotection_vial_index = len(deprotection_positions) - 1
+            
+            current_deprotection_pos = deprotection_positions[deprotection_vial_index]
+
             assigned = False
             for vial_name in related_vials:
                 rack, pos, occ = vial_map[vial_name]
@@ -187,16 +190,17 @@ class BuildSynthesisPlan():
 
                 if used < occ:
                     vial_usage_counter[vial_name] = used + 1
-                    # Add amino acid synthesis step
+
+                    # First row: Amino acid vial name with position and both vial positions
                     synthesis_rows.append({
-                        "NAME": f"{aa}{position}",
+                        "NAME": f"{aa}{position}",  # Amino acid with position number (e.g., Q1, E2, etc.)
                         "FLOW RATE A (ml/min)": 0.889,
                         "FLOW RATE B (ml/min)": 0.444,
-                        "FLOW RATE D (ml/min)": 0,
+                        "FLOW RATE D (ml/min)": 0.8,
                         "RESIDENCE 2": True,
-                        "AUTOSAMPLER SITE A": pos,  
+                        "AUTOSAMPLER SITE A": pos,  # Amino acid vial position
                         "REAGENT CONC A (M)": 0.1,
-                        "AUTOSAMPLER SITE B": rack2_start_pos,
+                        "AUTOSAMPLER SITE B": current_deprotection_pos,  # Deprotection vial position
                         "REAGENT CONC B (M)": 0.24,
                         "DO NOT FILL": False,
                         "REAGENT USE (ml)": 4,
@@ -207,23 +211,18 @@ class BuildSynthesisPlan():
                         "CLEANING FLOW RATE (ml/min)": 2,
                         "MANUAL CLEAN (ml)": 4
                     })
-                    
-                    # Determine which deprotection vial to use based on step distribution
-                    deprotection_vial_index = deprotection_usage_counter // uses_per_deprotection_vial
-                    if deprotection_vial_index >= len(deprotection_positions):
-                        deprotection_vial_index = len(deprotection_positions) - 1  # Use last vial if we exceed
-                    
-                    current_deprotection_pos = deprotection_positions[deprotection_vial_index]
-                    
+
+                    # Second row: Deprotection name with both vial positions
                     synthesis_rows.append({
-                        "NAME": f"deprotection {step_counter}",
-                        "FLOW RATE A (ml/min)": 0,
-                        "FLOW RATE B (ml/min)": 0,
+                        "NAME": "deprotection",
+                        "FLOW RATE A (ml/min)": 0.889,
+                        "FLOW RATE B (ml/min)": 0.444,
                         "FLOW RATE D (ml/min)": 0.8,
                         "RESIDENCE 2": True,
-                        "AUTOSAMPLER SITE A": current_deprotection_pos,
+                        "AUTOSAMPLER SITE A": pos,  # Same amino acid vial position
                         "REAGENT CONC A (M)": 0.1,
-                        "REAGENT CONC B (M)": 0.1,
+                        "AUTOSAMPLER SITE B": current_deprotection_pos,  # Same deprotection vial position
+                        "REAGENT CONC B (M)": 0.24,
                         "DO NOT FILL": False,
                         "REAGENT USE (ml)": 4,
                         "REACTOR TEMPERATURE 2 (C)": 75,
@@ -233,17 +232,41 @@ class BuildSynthesisPlan():
                         "CLEANING FLOW RATE (ml/min)": 2,
                         "MANUAL CLEAN (ml)": 4
                     })
+
+                    # Print debug information
+                    print(f"Step {position}: AA={aa} (vial={vial_name}), deprotection_counter={deprotection_usage_counter + 1}, vial_index={deprotection_vial_index}, deprotection_pos={current_deprotection_pos}")
                     
-                    step_counter += 1
-                    deprotection_usage_counter += 1
                     assigned = True
                     break
-                    
+
+            # INCREMENT the deprotection usage counter AFTER processing each amino acid
+            deprotection_usage_counter += 1
+
             if not assigned:
-                # fallback: no vial found or all full — unlikely if logic correct
                 print(f"Warning: Could not assign vial for amino acid {aa}")
+                # Add error rows for both amino acid and deprotection
                 synthesis_rows.append({
                     "NAME": f"ERROR_{aa}",
+                    "FLOW RATE A (ml/min)": 0,
+                    "FLOW RATE B (ml/min)": 0,
+                    "FLOW RATE D (ml/min)": 0,
+                    "RESIDENCE 2": False,
+                    "AUTOSAMPLER SITE A": 0,
+                    "REAGENT CONC A (M)": 0,
+                    "AUTOSAMPLER SITE B": 0,
+                    "REAGENT CONC B (M)": 0,
+                    "DO NOT FILL": True,
+                    "REAGENT USE (ml)": 0,
+                    "REACTOR TEMPERATURE 2 (C)": 0,
+                    "REACTOR TEMPERATURE 3 (C)": 0,
+                    "WHOLE PEAK": False,
+                    "DO NOT COLLECT": True,
+                    "CLEANING FLOW RATE (ml/min)": 0,
+                    "MANUAL CLEAN (ml)": 0
+                })
+                
+                synthesis_rows.append({
+                    "NAME": "ERROR_deprotection",
                     "FLOW RATE A (ml/min)": 0,
                     "FLOW RATE B (ml/min)": 0,
                     "FLOW RATE D (ml/min)": 0,

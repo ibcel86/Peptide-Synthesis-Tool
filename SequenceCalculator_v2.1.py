@@ -280,7 +280,5 @@ df_synth_plan = synth_plan.build_synthesis_plan(vial_map)
 df_vial_plan.to_csv("Vial_Plan.csv", index=False)
 df_synth_plan.to_csv("Synthesis_Plan.csv", index=False)
 
-print(f"\nOriginal sequence (N→C): {' '.join(calc.original_tokens)}")
-print(f"Synthesis order (C→N): {' '.join(calc.tokens)}")
-print("\nFiles exported: Vial_Plan.csv and Synthesis_Plan.csv")
+
 

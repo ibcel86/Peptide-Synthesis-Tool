@@ -43,61 +43,65 @@ N21,0.889,0.444,0.0,True,9,0.1,29,0.24,False,4,75,75,False,True,2,4
 deprotection 21,0.0,0.0,0.8,True,9,0.1,29,0.1,False,4,75,75,False,True,2,4
 C22,0.889,0.444,0.0,True,10,0.1,29,0.24,False,4,75,75,False,True,2,4
 deprotection 22,0.0,0.0,0.8,True,10,0.1,29,0.1,False,4,75,75,False,True,2,4
-Y23,0.889,0.444,0.0,True,14,0.1,30,0.24,False,4,75,75,False,True,2,4
+A23,0.889,0.444,0.0,True,14,0.1,30,0.24,False,4,75,75,False,True,2,4
 deprotection 23,0.0,0.0,0.8,True,14,0.1,30,0.1,False,4,75,75,False,True,2,4
-G24,0.889,0.444,0.0,True,7,0.1,30,0.24,False,4,75,75,False,True,2,4
-deprotection 24,0.0,0.0,0.8,True,7,0.1,30,0.1,False,4,75,75,False,True,2,4
-G25,0.889,0.444,0.0,True,7,0.1,30,0.24,False,4,75,75,False,True,2,4
-deprotection 25,0.0,0.0,0.8,True,7,0.1,30,0.1,False,4,75,75,False,True,2,4
-K26,0.889,0.444,0.0,True,12,0.1,30,0.24,False,4,75,75,False,True,2,4
-deprotection 26,0.0,0.0,0.8,True,12,0.1,30,0.1,False,4,75,75,False,True,2,4
-F27,0.889,0.444,0.0,True,4,0.1,30,0.24,False,4,75,75,False,True,2,4
-deprotection 27,0.0,0.0,0.8,True,4,0.1,30,0.1,False,4,75,75,False,True,2,4
-G28,0.889,0.444,0.0,True,7,0.1,30,0.24,False,4,75,75,False,True,2,4
-deprotection 28,0.0,0.0,0.8,True,7,0.1,30,0.1,False,4,75,75,False,True,2,4
-K29,0.889,0.444,0.0,True,12,0.1,30,0.24,False,4,75,75,False,True,2,4
-deprotection 29,0.0,0.0,0.8,True,12,0.1,30,0.1,False,4,75,75,False,True,2,4
-Pra30,0.889,0.444,0.0,True,15,0.1,30,0.24,False,4,75,75,False,True,2,4
-deprotection 30,0.0,0.0,0.8,True,15,0.1,30,0.1,False,4,75,75,False,True,2,4
-I31,0.889,0.444,0.0,True,2,0.1,30,0.24,False,4,75,75,False,True,2,4
-deprotection 31,0.0,0.0,0.8,True,2,0.1,30,0.1,False,4,75,75,False,True,2,4
-C32,0.889,0.444,0.0,True,10,0.1,30,0.24,False,4,75,75,False,True,2,4
-deprotection 32,0.0,0.0,0.8,True,10,0.1,30,0.1,False,4,75,75,False,True,2,4
-H33,0.889,0.444,0.0,True,16,0.1,30,0.24,False,4,75,75,False,True,2,4
-deprotection 33,0.0,0.0,0.8,True,16,0.1,30,0.1,False,4,75,75,False,True,2,4
-G34,0.889,0.444,0.0,True,8,0.1,31,0.24,False,4,75,75,False,True,2,4
-deprotection 34,0.0,0.0,0.8,True,8,0.1,31,0.1,False,4,75,75,False,True,2,4
-A35,0.889,0.444,0.0,True,17,0.1,31,0.24,False,4,75,75,False,True,2,4
-deprotection 35,0.0,0.0,0.8,True,17,0.1,31,0.1,False,4,75,75,False,True,2,4
-C36,0.889,0.444,0.0,True,10,0.1,31,0.24,False,4,75,75,False,True,2,4
-deprotection 36,0.0,0.0,0.8,True,10,0.1,31,0.1,False,4,75,75,False,True,2,4
-A37,0.889,0.444,0.0,True,17,0.1,31,0.24,False,4,75,75,False,True,2,4
-deprotection 37,0.0,0.0,0.8,True,17,0.1,31,0.1,False,4,75,75,False,True,2,4
-T38,0.889,0.444,0.0,True,18,0.1,31,0.24,False,4,75,75,False,True,2,4
-deprotection 38,0.0,0.0,0.8,True,18,0.1,31,0.1,False,4,75,75,False,True,2,4
-H39,0.889,0.444,0.0,True,16,0.1,31,0.24,False,4,75,75,False,True,2,4
-deprotection 39,0.0,0.0,0.8,True,16,0.1,31,0.1,False,4,75,75,False,True,2,4
-N40,0.889,0.444,0.0,True,9,0.1,31,0.24,False,4,75,75,False,True,2,4
-deprotection 40,0.0,0.0,0.8,True,9,0.1,31,0.1,False,4,75,75,False,True,2,4
-W41,0.889,0.444,0.0,True,3,0.1,31,0.24,False,4,75,75,False,True,2,4
-deprotection 41,0.0,0.0,0.8,True,3,0.1,31,0.1,False,4,75,75,False,True,2,4
+Q24,0.889,0.444,0.0,True,15,0.1,30,0.24,False,4,75,75,False,True,2,4
+deprotection 24,0.0,0.0,0.8,True,15,0.1,30,0.1,False,4,75,75,False,True,2,4
+Y25,0.889,0.444,0.0,True,16,0.1,30,0.24,False,4,75,75,False,True,2,4
+deprotection 25,0.0,0.0,0.8,True,16,0.1,30,0.1,False,4,75,75,False,True,2,4
+G26,0.889,0.444,0.0,True,7,0.1,30,0.24,False,4,75,75,False,True,2,4
+deprotection 26,0.0,0.0,0.8,True,7,0.1,30,0.1,False,4,75,75,False,True,2,4
+G27,0.889,0.444,0.0,True,7,0.1,30,0.24,False,4,75,75,False,True,2,4
+deprotection 27,0.0,0.0,0.8,True,7,0.1,30,0.1,False,4,75,75,False,True,2,4
+K28,0.889,0.444,0.0,True,12,0.1,30,0.24,False,4,75,75,False,True,2,4
+deprotection 28,0.0,0.0,0.8,True,12,0.1,30,0.1,False,4,75,75,False,True,2,4
+F29,0.889,0.444,0.0,True,4,0.1,30,0.24,False,4,75,75,False,True,2,4
+deprotection 29,0.0,0.0,0.8,True,4,0.1,30,0.1,False,4,75,75,False,True,2,4
+G30,0.889,0.444,0.0,True,7,0.1,30,0.24,False,4,75,75,False,True,2,4
+deprotection 30,0.0,0.0,0.8,True,7,0.1,30,0.1,False,4,75,75,False,True,2,4
+K31,0.889,0.444,0.0,True,12,0.1,30,0.24,False,4,75,75,False,True,2,4
+deprotection 31,0.0,0.0,0.8,True,12,0.1,30,0.1,False,4,75,75,False,True,2,4
+Pra32,0.889,0.444,0.0,True,17,0.1,30,0.24,False,4,75,75,False,True,2,4
+deprotection 32,0.0,0.0,0.8,True,17,0.1,30,0.1,False,4,75,75,False,True,2,4
+I33,0.889,0.444,0.0,True,2,0.1,30,0.24,False,4,75,75,False,True,2,4
+deprotection 33,0.0,0.0,0.8,True,2,0.1,30,0.1,False,4,75,75,False,True,2,4
+C34,0.889,0.444,0.0,True,10,0.1,31,0.24,False,4,75,75,False,True,2,4
+deprotection 34,0.0,0.0,0.8,True,10,0.1,31,0.1,False,4,75,75,False,True,2,4
+H35,0.889,0.444,0.0,True,18,0.1,31,0.24,False,4,75,75,False,True,2,4
+deprotection 35,0.0,0.0,0.8,True,18,0.1,31,0.1,False,4,75,75,False,True,2,4
+G36,0.889,0.444,0.0,True,8,0.1,31,0.24,False,4,75,75,False,True,2,4
+deprotection 36,0.0,0.0,0.8,True,8,0.1,31,0.1,False,4,75,75,False,True,2,4
+A37,0.889,0.444,0.0,True,14,0.1,31,0.24,False,4,75,75,False,True,2,4
+deprotection 37,0.0,0.0,0.8,True,14,0.1,31,0.1,False,4,75,75,False,True,2,4
+C38,0.889,0.444,0.0,True,10,0.1,31,0.24,False,4,75,75,False,True,2,4
+deprotection 38,0.0,0.0,0.8,True,10,0.1,31,0.1,False,4,75,75,False,True,2,4
+A39,0.889,0.444,0.0,True,14,0.1,31,0.24,False,4,75,75,False,True,2,4
+deprotection 39,0.0,0.0,0.8,True,14,0.1,31,0.1,False,4,75,75,False,True,2,4
+T40,0.889,0.444,0.0,True,19,0.1,31,0.24,False,4,75,75,False,True,2,4
+deprotection 40,0.0,0.0,0.8,True,19,0.1,31,0.1,False,4,75,75,False,True,2,4
+H41,0.889,0.444,0.0,True,18,0.1,31,0.24,False,4,75,75,False,True,2,4
+deprotection 41,0.0,0.0,0.8,True,18,0.1,31,0.1,False,4,75,75,False,True,2,4
 N42,0.889,0.444,0.0,True,9,0.1,31,0.24,False,4,75,75,False,True,2,4
 deprotection 42,0.0,0.0,0.8,True,9,0.1,31,0.1,False,4,75,75,False,True,2,4
 W43,0.889,0.444,0.0,True,3,0.1,31,0.24,False,4,75,75,False,True,2,4
 deprotection 43,0.0,0.0,0.8,True,3,0.1,31,0.1,False,4,75,75,False,True,2,4
-K44,0.889,0.444,0.0,True,12,0.1,31,0.24,False,4,75,75,False,True,2,4
-deprotection 44,0.0,0.0,0.8,True,12,0.1,31,0.1,False,4,75,75,False,True,2,4
-S45,0.889,0.444,0.0,True,6,0.1,32,0.24,False,4,75,75,False,True,2,4
-deprotection 45,0.0,0.0,0.8,True,6,0.1,32,0.1,False,4,75,75,False,True,2,4
-L46,0.889,0.444,0.0,True,19,0.1,32,0.24,False,4,75,75,False,True,2,4
-deprotection 46,0.0,0.0,0.8,True,19,0.1,32,0.1,False,4,75,75,False,True,2,4
-L47,0.889,0.444,0.0,True,19,0.1,32,0.24,False,4,75,75,False,True,2,4
-deprotection 47,0.0,0.0,0.8,True,19,0.1,32,0.1,False,4,75,75,False,True,2,4
-D48,0.889,0.444,0.0,True,20,0.1,32,0.24,False,4,75,75,False,True,2,4
+N44,0.889,0.444,0.0,True,9,0.1,31,0.24,False,4,75,75,False,True,2,4
+deprotection 44,0.0,0.0,0.8,True,9,0.1,31,0.1,False,4,75,75,False,True,2,4
+W45,0.889,0.444,0.0,True,3,0.1,32,0.24,False,4,75,75,False,True,2,4
+deprotection 45,0.0,0.0,0.8,True,3,0.1,32,0.1,False,4,75,75,False,True,2,4
+K46,0.889,0.444,0.0,True,12,0.1,32,0.24,False,4,75,75,False,True,2,4
+deprotection 46,0.0,0.0,0.8,True,12,0.1,32,0.1,False,4,75,75,False,True,2,4
+S47,0.889,0.444,0.0,True,6,0.1,32,0.24,False,4,75,75,False,True,2,4
+deprotection 47,0.0,0.0,0.8,True,6,0.1,32,0.1,False,4,75,75,False,True,2,4
+L48,0.889,0.444,0.0,True,20,0.1,32,0.24,False,4,75,75,False,True,2,4
 deprotection 48,0.0,0.0,0.8,True,20,0.1,32,0.1,False,4,75,75,False,True,2,4
-C49,0.889,0.444,0.0,True,10,0.1,32,0.24,False,4,75,75,False,True,2,4
-deprotection 49,0.0,0.0,0.8,True,10,0.1,32,0.1,False,4,75,75,False,True,2,4
-T50,0.889,0.444,0.0,True,18,0.1,32,0.24,False,4,75,75,False,True,2,4
-deprotection 50,0.0,0.0,0.8,True,18,0.1,32,0.1,False,4,75,75,False,True,2,4
-A51,0.889,0.444,0.0,True,17,0.1,32,0.24,False,4,75,75,False,True,2,4
-deprotection 51,0.0,0.0,0.8,True,17,0.1,32,0.1,False,4,75,75,False,True,2,4
+L49,0.889,0.444,0.0,True,20,0.1,32,0.24,False,4,75,75,False,True,2,4
+deprotection 49,0.0,0.0,0.8,True,20,0.1,32,0.1,False,4,75,75,False,True,2,4
+D50,0.889,0.444,0.0,True,21,0.1,32,0.24,False,4,75,75,False,True,2,4
+deprotection 50,0.0,0.0,0.8,True,21,0.1,32,0.1,False,4,75,75,False,True,2,4
+C51,0.889,0.444,0.0,True,10,0.1,32,0.24,False,4,75,75,False,True,2,4
+deprotection 51,0.0,0.0,0.8,True,10,0.1,32,0.1,False,4,75,75,False,True,2,4
+T52,0.889,0.444,0.0,True,19,0.1,32,0.24,False,4,75,75,False,True,2,4
+deprotection 52,0.0,0.0,0.8,True,19,0.1,32,0.1,False,4,75,75,False,True,2,4
+A53,0.889,0.444,0.0,True,14,0.1,32,0.24,False,4,75,75,False,True,2,4
+deprotection 53,0.0,0.0,0.8,True,14,0.1,32,0.1,False,4,75,75,False,True,2,4

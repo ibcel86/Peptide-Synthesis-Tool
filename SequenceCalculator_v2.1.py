@@ -3,6 +3,7 @@ import sys
 import token
 import pandas as pd
 import openpyxl
+import re
 from math import *
 from collections import Counter
 
@@ -18,7 +19,7 @@ class LoadFile:
     @classmethod
     def get_csv_path(cls):
         return cls.resource_path("amino_acids.csv")
-
+    
 path = LoadFile.get_csv_path()
 
 class DataLoader:
@@ -34,21 +35,22 @@ class CalculatePeptide:
     def __init__(self):
         self.data = DataLoader()
         self.tokens = None
-        self.original_tokens = None  # Keep track of original order
+        self.original_tokens = None 
     
     def validate_user_sequence(self):
         '''Validates user sequence. Input gives example of how the user should input the sequence'''
         
         user_sequence = input('Please input your sequence eg: T T Pra C: ')
 
-        # Store original order first
+        # Stores original user input
         self.original_tokens = [aa.strip() for aa in user_sequence.split()]
-        # Then reverse for synthesis (C-terminus to N-terminus)
+        # Reverses the sequence input so synthesis plan correctly shows the order of synthesis
         self.tokens = self.original_tokens[::-1]
 
-        # Finds invalid amino acids: those that are not in the valid set
+        # Finds invalid amino acids: those that are not in the .csv file
         invalid_amino_acids = [aa for aa in self.original_tokens if aa not in self.data.valid_amino_acids]
-              
+        # Raises errors to the user to ensure they know how to input their sequence. If the sequence is valid, the code
+        # returns confirmation of validity      
         if ' ' not in user_sequence:
             raise ValueError(f"Check peptide sequence has spaces between letters")
         elif invalid_amino_acids:
@@ -70,8 +72,8 @@ class BuildSynthesisPlan():
     
     def __init__(self, tokens, original_tokens=None):
         self.data = DataLoader()
-        self.tokens = tokens  # This is the reversed sequence for synthesis
-        self.original_tokens = original_tokens or tokens  # Keep original order for reference
+        self.tokens = tokens  # This obtains the reversed sequence to ensure correct synthesis order
+        self.original_tokens = original_tokens or tokens  # Required original sequence order for some calculations
         
     def vial_rack_positions(self, conc=0.4, max_occurrence=6, max_volume=16):
         '''Finds the number of occurrences for each amino acid to find how many vials
@@ -80,7 +82,8 @@ class BuildSynthesisPlan():
         
         amino_acid_occurrences = Counter(self.tokens)
         max_per_vial = floor(max_volume / 2.5)
-        
+        # Vial position logic: tracks vials and racks to ensure vials and racks are in correct order of synthesis,
+        # splits vials if the volume exceeds max volume per vial. Split vials are named with a number.
         output = []
         vial_map = {} 
 
@@ -142,15 +145,18 @@ class BuildSynthesisPlan():
         return num_vials_needed
        
     def build_synthesis_plan(self, vial_map, max_deprotection_volume=16):
+        '''Builds the synthesis plan using vial rack positions for amino acids and deprotection vials.
+        Outputs the .csv file which is uploaded to the auto-reactor and auto-sampler so the machine knows where and
+        when to pick up a vial.'''
         # Calculate required deprotection vials automatically
         num_deprotection_vials = self.calculate_deprotection_vials_needed(max_deprotection_volume)
         
         deprotection_start_pos = 28
-        deprotection_rack = 2
+        deprotection_rack = 2 # Deprotection vials are always in rack 2
         rack2_start_pos = 28
         rack2_end_pos = 54
 
-        # Check if we have enough rack space for deprotection vials
+        # Check if there are enough rack spaces for deprotection vials
         last_position_needed = deprotection_start_pos + num_deprotection_vials - 1
         if last_position_needed > rack2_end_pos:
             available_positions = rack2_end_pos - deprotection_start_pos + 1
@@ -163,14 +169,14 @@ class BuildSynthesisPlan():
         vial_usage_counter = {}
         deprotection_usage_counter = 0
 
-        # Build list of deprotection vial positions
+        # Builds a list of deprotection vial positions
         deprotection_positions = [deprotection_start_pos + i for i in range(num_deprotection_vials)]
         uses_per_deprotection_vial = ceil(len(self.tokens) / num_deprotection_vials)
 
-        # Position numbers based on synthesis order: 1 = first amino acid added (C-terminus)
+        # Position numbers based on synthesis order
         for synthesis_position, aa in enumerate(self.tokens, 1):
             
-            # Get relevant vial(s)
+            # Gets relevant vial(s)
             related_vials = [v for v in vial_map.keys() if v == aa or (v.startswith(aa) and v[len(aa):].isdigit())]
             related_vials.sort(key=lambda x: (0 if x == aa else int(x[len(aa):])))
 
@@ -209,7 +215,7 @@ class BuildSynthesisPlan():
                         "MANUAL CLEAN (ml)": 4
                     })
 
-                        # Get the deprotection vial position from the previous row
+                    # Get the deprotection vial position from the previous row
                     previous_deprotection_position = synthesis_rows[-1]["AUTOSAMPLER SITE B"]
 
                     # Deprotection step - numbered by synthesis order
@@ -237,8 +243,6 @@ class BuildSynthesisPlan():
                     assigned = True
                     break
 
-            
-
             if not assigned:
                 print(f"Warning: Could not assign vial for amino acid {aa}")
                 for name in [f"ERROR_{aa}", f"ERROR_deprotection_{synthesis_position}"]:
@@ -264,21 +268,59 @@ class BuildSynthesisPlan():
 
         df_synthesis_plan = pd.DataFrame(synthesis_rows)
         return df_synthesis_plan
+    
+class CompareSequences():
+    '''Class loads old csv files so scientists can change the peptide sequence, eg: if they substitute
+    amino acids, this class runs logic to compare the sequences, finds the different amino acids (eg Pra in place of K)
+    and appends the new vial to the end of the rack. The synthesis plan is also modified and saved as a new csv file along
+    with the vial map.'''
+
+    def __init__(self):
+        self.data = DataLoader()
+        self.tokens = None
+        self.original_tokens = None
+
+    def load_old_sequence(self):
+        '''Loads the old sequence by extracting it from the synthesis plan csv'''
+        old_sequence = os.path.join(os.path.dirname(__file__), "synthesis plan.csv")
+        if not os.path.exists(path):
+            raise FileNotFoundError("Synthesis plan not found, please ensure the file is accessible.")
+        
+        df = pd.read_csv(path)
+
+        # Filter out only the rows that are amino acid additions only
+        aa_rows = df[~df['NAME'].str.contains('deprotection', case=False, na=False)]
+
+        # Extract the amino acid base names from the 'NAME' column by removing trailing digits
+        cleaned_tokens = [
+            re.sub(r'\d+$', '', name.strip())
+            for name in aa_rows['NAME']
+        ]
+
+        self.original_tokens = cleaned_tokens[::-1]  # Restore original input order
+        self.tokens = cleaned_tokens  # Reverse if needed for synthesis order
+
+        return f"Previous sequence: {' '.join(self.original_tokens)}"
+
+    def load_old_vial_map(self):
+        path = os.path.join(os.path.dirname(__file__), "vial map.csv")
+        if not os.path.exists(path):
+            raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
+        return pd.read_csv(path)
 
 ### Main execution ###
+def main():
+    calc = CalculatePeptide()
+    amino_acids = calc.validate_user_sequence() 
+    sequence_mass = calc.calculate_sequence_mass()
+    synth_plan = BuildSynthesisPlan(calc.tokens, calc.original_tokens)
+    df_vial_plan, vial_map = synth_plan.vial_rack_positions()
+    df_synth_plan = synth_plan.build_synthesis_plan(vial_map)
+    df_vial_plan.to_csv("vial plan.csv", index=False)
+    df_synth_plan.to_csv("synthesis plan.csv", index=False)
 
-calc = CalculatePeptide()
-amino_acids = calc.validate_user_sequence()  # Gets tokens from user input
-sequence_mass = calc.calculate_sequence_mass()
-
-# Pass both reversed tokens (for synthesis) and original tokens (for reference)
-synth_plan = BuildSynthesisPlan(calc.tokens, calc.original_tokens)
-df_vial_plan, vial_map = synth_plan.vial_rack_positions()
-df_synth_plan = synth_plan.build_synthesis_plan(vial_map)
-
-# Export as separate csv files
-df_vial_plan.to_csv("Vial_Plan.csv", index=False)
-df_synth_plan.to_csv("Synthesis_Plan.csv", index=False)
+if __name__ == "__main__":
+    main()
 
 
 

@@ -8,6 +8,12 @@ from math import *
 from collections import Counter
 import customtkinter
 
+class EntryFrame(customtkinter.CTk):
+        def __init__(self, master):
+            super().__init__(master)
+
+            self.entry = CalculatePeptide.validate_user_sequence()
+
 class App(customtkinter.CTk):
     '''Activates the GUI etc'''
     def __init__(self):
@@ -15,9 +21,14 @@ class App(customtkinter.CTk):
 
         self.title("Protein Sequence Calculator")
         self.geometry("1280x720")
+        self.entry_frame = EntryFrame(self)
+        self.entry_frame.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="nsw")
         self.grid_columnconfigure((0, 1), weight=1)
-        customtkinter.set_appearance_mode("dark")
-
+        self.grid_rowconfigure((0, 1), weight=1)
+        self.button = customtkinter.CTkButton(self, text="Calculate Sequence", command=CalculatePeptide.validate_user_sequence(self))
+        self.button.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
+        
+        
 class LoadFile:
     '''Loads csv file globally to be used in other functions and classes'''
     @staticmethod
@@ -51,11 +62,11 @@ class CalculatePeptide:
     def validate_user_sequence(self):
         '''Validates user sequence. Input gives example of how the user should input the sequence'''
         
-        entry = customtkinter.CTkEntry(app, placeholder_text="Please inpute your sequence eg: T T Pra C: ")
+        user_entry = customtkinter.CTkEntry(placeholder_text="Please inpute your sequence eg: T T Pra C: ")
         #user_sequence = input('Please input your sequence eg: T T Pra C: ')
-
+        
         # Stores original user input
-        self.original_tokens = [aa.strip() for aa in entry.split()]
+        self.original_tokens = [aa.strip() for aa in user_entry.split()]
         # Reverses the sequence input so synthesis plan correctly shows the order of synthesis
         self.tokens = self.original_tokens[::-1]
 
@@ -63,7 +74,7 @@ class CalculatePeptide:
         invalid_amino_acids = [aa for aa in self.original_tokens if aa not in self.data.valid_amino_acids]
         # Raises errors to the user to ensure they know how to input their sequence. If the sequence is valid, the code
         # returns confirmation of validity      
-        if ' ' not in entry:
+        if ' ' not in user_entry:
             raise ValueError(f"Check peptide sequence has spaces between letters")
         elif invalid_amino_acids:
             raise ValueError(f"Invalid amino acid(s): {', '.join(invalid_amino_acids)}. Check sequence is correct and entered as per the example")
@@ -331,6 +342,7 @@ def main():
     df_vial_plan.to_csv("vial plan.csv", index=False)
     df_synth_plan.to_csv("synthesis plan.csv", index=False)
 
+customtkinter.set_appearance_mode("dark")
 app = App()
 app.mainloop()
 

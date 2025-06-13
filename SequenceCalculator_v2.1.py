@@ -6,6 +6,17 @@ import openpyxl
 import re
 from math import *
 from collections import Counter
+import customtkinter
+
+class App(customtkinter.CTk):
+    '''Activates the GUI etc'''
+    def __init__(self):
+        super().__init__()
+
+        self.title("Protein Sequence Calculator")
+        self.geometry("1280x720")
+        self.grid_columnconfigure((0, 1), weight=1)
+        customtkinter.set_appearance_mode("dark")
 
 class LoadFile:
     '''Loads csv file globally to be used in other functions and classes'''
@@ -40,10 +51,11 @@ class CalculatePeptide:
     def validate_user_sequence(self):
         '''Validates user sequence. Input gives example of how the user should input the sequence'''
         
-        user_sequence = input('Please input your sequence eg: T T Pra C: ')
+        entry = customtkinter.CTkEntry(app, placeholder_text="Please inpute your sequence eg: T T Pra C: ")
+        #user_sequence = input('Please input your sequence eg: T T Pra C: ')
 
         # Stores original user input
-        self.original_tokens = [aa.strip() for aa in user_sequence.split()]
+        self.original_tokens = [aa.strip() for aa in entry.split()]
         # Reverses the sequence input so synthesis plan correctly shows the order of synthesis
         self.tokens = self.original_tokens[::-1]
 
@@ -51,7 +63,7 @@ class CalculatePeptide:
         invalid_amino_acids = [aa for aa in self.original_tokens if aa not in self.data.valid_amino_acids]
         # Raises errors to the user to ensure they know how to input their sequence. If the sequence is valid, the code
         # returns confirmation of validity      
-        if ' ' not in user_sequence:
+        if ' ' not in entry:
             raise ValueError(f"Check peptide sequence has spaces between letters")
         elif invalid_amino_acids:
             raise ValueError(f"Invalid amino acid(s): {', '.join(invalid_amino_acids)}. Check sequence is correct and entered as per the example")
@@ -318,6 +330,9 @@ def main():
     df_synth_plan = synth_plan.build_synthesis_plan(vial_map)
     df_vial_plan.to_csv("vial plan.csv", index=False)
     df_synth_plan.to_csv("synthesis plan.csv", index=False)
+
+app = App()
+app.mainloop()
 
 if __name__ == "__main__":
     main()

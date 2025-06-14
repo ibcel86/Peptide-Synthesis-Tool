@@ -6,28 +6,8 @@ import openpyxl
 import re
 from math import *
 from collections import Counter
-import customtkinter
+from gui import App
 
-class EntryInformation(customtkinter.CTk):
-
-    def __init__(self, master):
-        super().__init__(master)
-
-        self.entry = customtkinter.CTkEntry(self, text="Enter your sequence eg T T Pra C: ")
-        self.entry.configure(self, witdth=1180, height=50)
-        self.button = customtkinter.CTkButton(self, text="Process Sequence", command=CalculatePeptide.validate_user_sequence)
-        self.button.pack()
-class App(customtkinter.CTk):
-    '''Activates the GUI etc'''
-    def __init__(self):
-        super().__init__()
-
-        self.title("Protein Sequence Calculator")
-        customtkinter.set_appearance_mode("dark")
-        self.geometry("1280x720")
-        self.grid_columnconfigure((0, 1), weight=1)
-        self.grid_rowconfigure((0, 1), weight=1)
-   
 class LoadFile:
     '''Loads csv file globally to be used in other functions and classes'''
     @staticmethod
@@ -64,7 +44,6 @@ class CalculatePeptide:
         self.original_tokens = [aa.strip() for aa in sequence.split()]
         # Reverses the sequence input so synthesis plan correctly shows the order of synthesis
         self.tokens = self.original_tokens[::-1]
-
         # Finds invalid amino acids: those that are not in the .csv file
         invalid_amino_acids = [aa for aa in self.original_tokens if aa not in self.data.valid_amino_acids]
         # Raises errors to the user to ensure they know how to input their sequence. If the sequence is valid, the code
@@ -287,46 +266,46 @@ class BuildSynthesisPlan():
         df_synthesis_plan = pd.DataFrame(synthesis_rows)
         return df_synthesis_plan
     
-class CompareSequences():
-    '''Class loads old csv files so scientists can change the peptide sequence, eg: if they substitute
-    amino acids, this class runs logic to compare the sequences, finds the different amino acids (eg Pra in place of K)
-    and appends the new vial to the end of the rack. The synthesis plan is also modified and saved as a new csv file along
-    with the vial map.'''
+#class CompareSequences():
+    #'''Class loads old csv files so scientists can change the peptide sequence, eg: if they substitute
+    #amino acids, this class runs logic to compare the sequences, finds the different amino acids (eg Pra in place of K)
+    #and appends the new vial to the end of the rack. The synthesis plan is also modified and saved as a new csv file along
+    #with the vial map.'''
 
-    def __init__(self):
-        self.data = DataLoader()
-        self.tokens = None
-        self.original_tokens = None
+ #   def __init__(self):
+   #     self.data = DataLoader()
+    #    self.tokens = None
+     #   self.original_tokens = None
 
-    def load_old_sequence(self):
-        '''Loads the old sequence by extracting it from the synthesis plan csv'''
-        old_sequence = os.path.join(os.path.dirname(__file__), "synthesis plan.csv")
-        if not os.path.exists(path):
-            raise FileNotFoundError("Synthesis plan not found, please ensure the file is accessible.")
+  #  def load_old_sequence(self):
+        #'''Loads the old sequence by extracting it from the synthesis plan csv'''
+      #  old_sequence = os.path.join(os.path.dirname(__file__), "synthesis plan.csv")
+       # if not os.path.exists(path):
+     #       raise FileNotFoundError("Synthesis plan not found, please ensure the file is accessible.")
         
-        df = pd.read_csv(path)
+      #  df = pd.read_csv(path)
 
         # Filter out only the rows that are amino acid additions only
-        aa_rows = df[~df['NAME'].str.contains('deprotection', case=False, na=False)]
+       # aa_rows = df[~df['NAME'].str.contains('deprotection', case=False, na=False)]
 
         # Extract the amino acid base names from the 'NAME' column by removing trailing digits
-        cleaned_tokens = [
-            re.sub(r'\d+$', '', name.strip())
-            for name in aa_rows['NAME']
-        ]
+        #cleaned_tokens = [
+         #   re.sub(r'\d+$', '', name.strip())
+          #  for name in aa_rows['NAME']
+        #]
 
-        self.original_tokens = cleaned_tokens[::-1]  # Restore original input order
-        self.tokens = cleaned_tokens  # Reverse if needed for synthesis order
+        #self.original_tokens = cleaned_tokens[::-1]  # Restore original input order
+        #self.tokens = cleaned_tokens  # Reverse if needed for synthesis order
 
-        return f"Previous sequence: {' '.join(self.original_tokens)}"
+       # return f"Previous sequence: {' '.join(self.original_tokens)}"
 
-    def load_old_vial_map(self):
-        path = os.path.join(os.path.dirname(__file__), "vial map.csv")
-        if not os.path.exists(path):
-            raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
-        return pd.read_csv(path)
+    #def load_old_vial_map(self):
+     #   path = os.path.join(os.path.dirname(__file__), "vial map.csv")
+      #  if not os.path.exists(path):
+       #     raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
+        #return pd.read_csv(path)
 
-### Main execution ###
+### Main execution ####
 def main():
     calc = CalculatePeptide()
     synth_plan = BuildSynthesisPlan(calc.tokens, calc.original_tokens)
@@ -335,11 +314,6 @@ def main():
     df_vial_plan.to_csv("vial plan.csv", index=False)
     df_synth_plan.to_csv("synthesis plan.csv", index=False)
 
-app = App()
-app.mainloop()
-
 if __name__ == "__main__":
-    main()
-
-
-
+    app = App()
+    app.mainloop()

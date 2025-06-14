@@ -16,7 +16,10 @@ class AppFrame(customtkinter.CTk):
     def __init__(self, master):
         super().__init__(master)
 
-        self.entry = customtkinter.CTkEntry(app, placeholder_text="Please input your sequence eg T T Pra C")
+        self.entry = customtkinter.CTkEntry(app, placeholder_text="Enter your sequence eg T T Pra C: ")
+        self.entry.pack(padx=20, pady=20)#
+        self.button = customtkinter.CTkButton(self, text="Generate", command ="")
+        return self.entry.get()
 
 class App(customtkinter.CTk):
     '''Activates the GUI etc'''

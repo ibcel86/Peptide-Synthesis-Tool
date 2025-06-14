@@ -8,27 +8,35 @@ from math import *
 from collections import Counter
 import customtkinter
 
-class EntryFrame(customtkinter.CTk):
-        def __init__(self, master):
-            super().__init__(master)
+# Class TabView(customtkinter.CTk):
+    # def __init__(self, master):
+        # super().__init__(master)
 
-            self.entry = CalculatePeptide.validate_user_sequence()
+class AppFrame(customtkinter.CTk):
+    def __init__(self, master):
+        super().__init__(master)
+
+        self.entry = customtkinter.CTkEntry(app, placeholder_text="Please input your sequence eg T T Pra C")
 
 class App(customtkinter.CTk):
     '''Activates the GUI etc'''
     def __init__(self):
         super().__init__()
 
+        customtkinter.set_appearance_mode("dark")
         self.title("Protein Sequence Calculator")
         self.geometry("1280x720")
-        self.entry_frame = EntryFrame(self)
-        self.entry_frame.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="nsw")
         self.grid_columnconfigure((0, 1), weight=1)
         self.grid_rowconfigure((0, 1), weight=1)
-        self.button = customtkinter.CTkButton(self, text="Calculate Sequence", command=CalculatePeptide.validate_user_sequence(self))
-        self.button.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
+
+        #Entry
+        #Buttons
+        #Tab for compare sequence
         
         
+        self.my_frame = AppFrame(master=self)
+        self.my_frame.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
+
 class LoadFile:
     '''Loads csv file globally to be used in other functions and classes'''
     @staticmethod
@@ -342,7 +350,6 @@ def main():
     df_vial_plan.to_csv("vial plan.csv", index=False)
     df_synth_plan.to_csv("synthesis plan.csv", index=False)
 
-customtkinter.set_appearance_mode("dark")
 app = App()
 app.mainloop()
 

@@ -8,38 +8,26 @@ from math import *
 from collections import Counter
 import customtkinter
 
-# Class TabView(customtkinter.CTk):
-    # def __init__(self, master):
-        # super().__init__(master)
+class EntryInformation(customtkinter.CTk):
 
-class AppFrame(customtkinter.CTk):
     def __init__(self, master):
         super().__init__(master)
 
-        self.entry = customtkinter.CTkEntry(app, placeholder_text="Enter your sequence eg T T Pra C: ")
-        self.entry.pack(padx=20, pady=20)#
-        self.button = customtkinter.CTkButton(self, text="Generate", command ="")
-        return self.entry.get()
-
+        self.entry = customtkinter.CTkEntry(self, text="Enter your sequence eg T T Pra C: ")
+        self.entry.configure(self, witdth=1180, height=50)
+        self.button = customtkinter.CTkButton(self, text="Process Sequence", command=CalculatePeptide.validate_user_sequence)
+        self.button.pack()
 class App(customtkinter.CTk):
     '''Activates the GUI etc'''
     def __init__(self):
         super().__init__()
 
-        customtkinter.set_appearance_mode("dark")
         self.title("Protein Sequence Calculator")
+        customtkinter.set_appearance_mode("dark")
         self.geometry("1280x720")
         self.grid_columnconfigure((0, 1), weight=1)
         self.grid_rowconfigure((0, 1), weight=1)
-
-        #Entry
-        #Buttons
-        #Tab for compare sequence
-        
-        
-        self.my_frame = AppFrame(master=self)
-        self.my_frame.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
-
+   
 class LoadFile:
     '''Loads csv file globally to be used in other functions and classes'''
     @staticmethod
@@ -70,14 +58,10 @@ class CalculatePeptide:
         self.tokens = None
         self.original_tokens = None 
     
-    def validate_user_sequence(self):
+    def validate_user_sequence(self, sequence):
         '''Validates user sequence. Input gives example of how the user should input the sequence'''
         
-        user_entry = customtkinter.CTkEntry(placeholder_text="Please inpute your sequence eg: T T Pra C: ")
-        #user_sequence = input('Please input your sequence eg: T T Pra C: ')
-        
-        # Stores original user input
-        self.original_tokens = [aa.strip() for aa in user_entry.split()]
+        self.original_tokens = [aa.strip() for aa in sequence.split()]
         # Reverses the sequence input so synthesis plan correctly shows the order of synthesis
         self.tokens = self.original_tokens[::-1]
 
@@ -85,7 +69,7 @@ class CalculatePeptide:
         invalid_amino_acids = [aa for aa in self.original_tokens if aa not in self.data.valid_amino_acids]
         # Raises errors to the user to ensure they know how to input their sequence. If the sequence is valid, the code
         # returns confirmation of validity      
-        if ' ' not in user_entry:
+        if ' ' not in sequence:
             raise ValueError(f"Check peptide sequence has spaces between letters")
         elif invalid_amino_acids:
             raise ValueError(f"Invalid amino acid(s): {', '.join(invalid_amino_acids)}. Check sequence is correct and entered as per the example")
@@ -345,8 +329,6 @@ class CompareSequences():
 ### Main execution ###
 def main():
     calc = CalculatePeptide()
-    amino_acids = calc.validate_user_sequence() 
-    sequence_mass = calc.calculate_sequence_mass()
     synth_plan = BuildSynthesisPlan(calc.tokens, calc.original_tokens)
     df_vial_plan, vial_map = synth_plan.vial_rack_positions()
     df_synth_plan = synth_plan.build_synthesis_plan(vial_map)

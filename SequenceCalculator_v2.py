@@ -266,6 +266,11 @@ class BuildSynthesisPlan():
         df_synthesis_plan = pd.DataFrame(synthesis_rows)
         return df_synthesis_plan
     
+    def process_sequence():
+
+        def __init__(self):
+            pass
+
 #class CompareSequences():
  #   '''Class loads old csv files so scientists can change the peptide sequence, eg: if they substitute
   #  amino acids, this class runs logic to compare the sequences, finds the different amino acids (eg Pra in place of K)

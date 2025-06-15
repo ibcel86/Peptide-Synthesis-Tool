@@ -1,6 +1,7 @@
 import customtkinter
-from SequenceCalculator_v2 import CalculatePeptide
 from CTkMessagebox import CTkMessagebox
+from SequenceCalculator_v2 import CalculatePeptide, BuildSynthesisPlan
+
 
 class TabView(customtkinter.CTkTabview):
     def __init__(self, master):
@@ -27,12 +28,12 @@ class TabView(customtkinter.CTkTabview):
     def validate_sequence(self):
         sequence = self.entry.get()
         self.calc = CalculatePeptide()
+        self.plan = BuildSynthesisPlan()
         try:
             msg = self.calc.validate_user_sequence(sequence)
-            customtkinter.CTkMessagebox(title="Success", message=msg, icon="check")
+            CTkMessagebox(title="Success", message=msg, icon="check")
         except ValueError as e:
-            customtkinter.CTkMessagebox(title="Error", message=str(e), icon="cancel")
-
+            CTkMessagebox(title="Error", message=str(e), icon="cancel")
 
 class App(customtkinter.CTk):
     '''Activates the GUI etc'''

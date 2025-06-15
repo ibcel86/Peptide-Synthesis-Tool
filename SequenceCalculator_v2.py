@@ -22,14 +22,13 @@ class LoadFile:
         return cls.resource_path("amino_acids.csv")
     
 path = LoadFile.get_csv_path()
-
+        
 class DataLoader:
     '''Shared data access for amino acid information'''
     def __init__(self):
         self.df = pd.read_csv(path)
         self.valid_amino_acids = set(self.df['AA'].str.strip())
         self.mw_dict = dict(zip(self.df['AA'], self.df['MW']))
-
 class CalculatePeptide:
     '''Validates user input and calculates peptide mass'''
     
@@ -265,11 +264,6 @@ class BuildSynthesisPlan():
 
         df_synthesis_plan = pd.DataFrame(synthesis_rows)
         return df_synthesis_plan
-    
-    def process_sequence():
-
-        def __init__(self):
-            pass
 
 #class CompareSequences():
  #   '''Class loads old csv files so scientists can change the peptide sequence, eg: if they substitute

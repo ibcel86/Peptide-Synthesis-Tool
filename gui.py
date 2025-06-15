@@ -16,10 +16,10 @@ class TabView(customtkinter.CTkTabview):
         self.title_synthesisplanner.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
 
         self.entry = customtkinter.CTkEntry(self.tab("Synthesis Planner"), placeholder_text="Please enter your sequence eg T T Pra C: ")
-        self.entry.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.entry.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
         self.entry.bind("<Return>", lambda event: self.process_sequence())
         self.submit_button = customtkinter.CTkButton(self.tab("Synthesis Planner"), text="Submit", command=self.process_sequence)
-        self.submit_button.grid(row=2, column=0, padx=10, pady=10, sticky="w")
+        self.submit_button.grid(row=2, column=0, padx=10, pady=10)
 
         # Modify Synthesis Tab, Entry and Button
         self.title_modifysynthesis = customtkinter.CTkLabel(self.tab("Modify Synthesis"), text="Modify Synthesis")
@@ -43,7 +43,6 @@ class TabView(customtkinter.CTkTabview):
             CTkMessagebox(title="Success", message="CSV files saved successfully.", icon="check")
         except ValueError as e:
             CTkMessagebox(title="Error", message=str(e), icon="cancel")
-
 
 
 class App(customtkinter.CTk):

@@ -23,7 +23,13 @@ class TabView(customtkinter.CTkTabview):
 
         # Modify Synthesis Tab, Entry and Button
         self.title_modifysynthesis = customtkinter.CTkLabel(self.tab("Modify Synthesis"), text="Modify Synthesis")
-        self.title_modifysynthesis.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="e")
+        self.title_modifysynthesis.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
+
+        self.entry_modify = customtkinter.CTkEntry(self.tab("Modify Synthesis"), placeholder_text="Please enter your sequence eg T T Pra C: ")
+        self.entry_modify.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+        self.entry_modify.bind("<Return>", lambda event: self.process_sequence())
+        self.submit_button_modify = customtkinter.CTkButton(self.tab("Modify Synthesis"), text="Submit", command=self.process_sequence)
+        self.submit_button_modify.grid(row=2, column=0, padx=10, pady=10)
 
     def process_sequence(self):
         sequence = self.entry.get()

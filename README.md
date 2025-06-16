@@ -1,49 +1,94 @@
-# The Sequence Calculator 
+# The Sequence Calculator
 
-When developing novel peptide compounds in drug discovery, scientists have to manually calculate the concentration, volume, and mass of each individual amino acid in the sequence. For short peptides this is not a problem, but for very long peptides (100 mer or more) this ia time consuming task which if mistakes are made, can cost scientists weeks. 
+When developing novel peptide compounds in drug discovery, scientists often manually calculate the concentration, volume, and mass of each amino acid in a sequence. While this is manageable for short peptides, longer chains (e.g., 100+ mers) make the process error-prone and time-consuming — a single miscalculation can result in weeks of lost work.
 
-The Sequence Calculator is a simple tool that allows scientists to put in their peptide sequence and get out an excel file that gives them the required information to synthesise their peptide of choice on an automated peptide synthesiser.
+The **Sequence Calculator** is a simple but powerful tool that allows scientists to input a peptide sequence and receive an Excel (or CSV) output containing all the data needed to synthesise their peptide on an automated peptide synthesiser.
 
-The scientists need to know how many vials they will need, how many racks they will need, and how much of each amino acid they will need. Further, the scientists are limited by the volume of the vial so they need to know how many times a particular amino acid appears in a sequence before they need a new vial. In this tool, the reactor loop is 2.5 mL and the vials hold 
-16 mL of solvent. So the maximum number of times a vial can be sampled is 6 before a new vial is needed (16 ml vial /2.5 ml reactor coil is 6.4 samplings). The calculator first calculates the occurrence of a particular amino acid (the number of times it appears in the peptide) and then calculates the number of vials required. If the amino acid T appears 8 times, the excel sheet will output T, T2 and split the vials so the correct number of samples is taken. You cannot take 8 samplings from a vial that has a 6 sample limit!
+---
 
-Then, in a separate sheet in the same excel sheet, the calculator will output the order the vials are samples for a particular peptide by giving the vials a number. 
+## Key Features
 
-The amino_acid.csv file is kept separate from the .exe but in the same directory (folder) so that scientists can add novel un-natural amino acids to the csv file so that the novel sequences can still be run without causing errors. The csv contains the amino acid code (eg, T or W) and their molecular weight (MW) which is needed for calculations.
+- Calculates amino acid mass, concentration, and volume
+- Handles long sequences with repeated residues
+- Automatically determines:
+  - How many vials are needed
+  - How many racks are required (rack size limit = 30)
+  - Vial sampling order
+- Supports custom amino acids via a user-editable `amino_acid.csv` file
+- Exports machine-readable synthesis plans and vial maps
 
-Due to un-natural amino acids not having a single letter designation, they are put in as Pra for example. This means that the sequence must be put in with spaces between each amino acid letter: T T V Q I Pra P R A instead of TTVQIPraPRA because Pra and P R A are seen as the same thing and so the code has been written to strip spaces between the letters to capture
-the three letter un-natural amino acids. (Note, this can be adapted for three letter codons as well).
+---
 
-## Inner workings
+## Sampling & Vial Logic
 
-### def resource_path(relative_path) 
+Due to hardware constraints:
 
-Checks that the csv file is located in the same directory as the .exe file
+- Reactor coil volume = **2.5 mL**
+- Vial volume = **16 mL**
+- ⇒ A vial can only be sampled **6 times** before a new one is needed
 
-### def validate_sequence(sequence, df) 
+For example, if the amino acid `T` appears **8 times**, the system will split it into two vials: `T` and `T2`. This ensures that the 6-sample limit per vial is not exceeded.
 
-Uses a panda dataframe validate the amino acids in a sequence and then splits them into tokens
+---
 
-### def calculate_sequence_mass(tokens, df) 
+## Output Files
 
-Uses tokenised amino acids to calculate mass. The amino acids in the sequence are made into tokens because single letter amino acids and three letter amino acids must have spaces to avoid conflicts that result in inproper interpretation of the peptide sequence.
+- **Vial Plan**: A list of vials required, their positions in the rack, and associated amino acids  
+- **Synthesis Plan**: A sampling order used by the peptide synthesiser  
+- Both are exported as Excel (v1) or CSV (v2)
 
-### def find_occurrence(tokens) 
+---
 
-Finds the number of times a single amino acid appears in the peptide sequence so that later, this data can be used to calculate the number of vials required for a particular amino acid
+## Amino Acid Format
 
-### def calculate_aa_mass_volume(tokens, df, conc=0.4, max_per_vial=6, max_volume=16) 
+- **Single-letter codes** and **custom 3-letter codes** are both supported
+- To avoid ambiguity, sequences with 3-letter codes must include spaces:
 
-Does the meat of the calculations. First, creates a dictionary and zips the datafram AA and MW together, gets the number of occurrences, and uses max per vial to ensure calculate how to split vials. A vial map using a dictionary is created because the racks are limited to 30 positions. Each amino acid (and split vials) is given a specific numerical position in the rack that the scientist will need to know. This data is output to the excel file for the scientist. Once the for loop hits position 30, the rack number is increased and the new rack is limited to 30 again. This will loop depending on how many vials and racks are required. The for loops determine how many vials are required using the logic that if count (occurrence) is greater than the max_per_vial (set at 6 currently), then the amino acid is split into two vials. The vial map is output as a panda data frame.
+T T V Q I Pra P R A  ✅
+TTVQIPraPRA          ❌
 
-### def build_synthesis_plan(tokens, vial_map, max_per_vial=6) 
+## ⚙Internal Logic (Function Overview)
 
-Takes the above funtions outputs to check for related vials and ensure they are named correctly in the output file. If T has an occurrence of 8, this function ensures the vials in the map are named T, T2 for the sequence. This is returned as a dataframe. This function creates the table that tells the machine which order to sample the vials for the synthesis of the input sequence. 
+- resource_path(): Ensures `amino_acid.csv` is found when running as `.exe`
+- validate_sequence(): Validates sequence against the amino acid database
+- calculate_sequence_mass(): Calculates molecular weight of the sequence
+- find_occurrence(): Counts occurrences of each amino acid
+- calculate_aa_mass_volume(): Determines vial count, splits, and rack layout
+- build_synthesis_plan(): Maps the correct vial sampling order
+- process_sequence()`: Ties all logic together through a Tkinter interface
 
-### def process_sequence() 
+---
 
-Is all of the tkinter outputs and inputs
+## Executable Notes
 
-All of this codes takes a peptide sequence and gives the scientists the amount of each individual amino acid they need, the occurence of each in a sequence so that a synthesis plan can be devised, and then outputs the vial order required to synthesise the peptide on the automatic peptide synthesiser. 
+- Use `pyinstaller` to build the `.exe`
+- The `.exe` is ~33 MB; GitHub has a 25 MB limit, so only the Python code is available here
+- Ensure the `.exe` and `amino_acid.csv` are placed in the same directory
 
-To create the .exe file run pyinstaller. The .exe file is 33 mB and the upload limit is 25 mB. The python script is available in files.
+---
+
+## Version 2: Improved Output + Sequence Comparison (WIP)
+
+Version 2 introduces significant upgrades:
+
+- **Output Format**: CSV output now adheres to the format required by legacy synthesis machines
+- **Compatibility Mode**: Output was reverse-engineered based on exported experiments from the equipment itself
+- **Sequence Comparison Tool** *(in development)*:
+  - Allows uploading of a previously synthesised sequence
+  - Identifies new or changed amino acids
+  - Appends new vial positions to the end of existing racks
+  - Automates what was previously a manual (and time-consuming) task
+
+> **Note:** This feature is still in **alpha**, and the code is currently available on the [`dev`](https://github.com/ibcel86/Sequence-Calculator/tree/version2_dev) branch.
+
+---
+
+## Development Status
+
+This project is actively evolving. Version 1 is stable and usable, while Version 2 features (CSV output and sequence comparison) are still undergoing testing.
+
+---
+
+## Contributions & Feedback
+
+This is a solo portfolio project built to solve a real-world lab workflow problem for a legacy piece of equipment. Feedback, suggestions, and pull requests are welcome!

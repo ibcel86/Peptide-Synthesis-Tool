@@ -60,7 +60,7 @@ class CalculatePeptide:
             raise ValueError("No sequence loaded. Run validate_user_sequence() first.")
         
         validated_sequence_mass = sum(self.data.mw_dict[aa] for aa in self.tokens)
-        return f'Your peptide is {len(self.tokens)} amino acids long with a mass of {validated_sequence_mass:.2f} g/mol'
+       
 
 class BuildSynthesisPlan():
     '''Calculates vial positions and rack assignments. Exports csv file that is read by the auto-reactor and auto-sampler

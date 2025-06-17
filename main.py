@@ -41,7 +41,7 @@ class TabView(customtkinter.CTkTabview):
             valid_sequence, invalid_amino_acids = self.calc.validate_user_sequence(sequence)
             self.tokens = self.calc.tokens
             original_tokens = self.calc.original_tokens
-            length, validated_sequence_mass = self.calc.calculate_sequence_mass()
+            length, validated_sequence_mass = self.calc.calculate_sequence_mass(self)
 
             planner = BuildSynthesisPlan(self.tokens, original_tokens)
             df_vial_plan, vial_map = planner.vial_rack_positions()
@@ -61,14 +61,16 @@ class TabView(customtkinter.CTkTabview):
         except ValueError as e:
             CTkMessagebox(title="Error", message=str(e), icon="cancel")
 
+            if not self.calc.tokens:
+                CTkMessagebox(title="Error", message="No sequence loaded. Run validate_user_sequence() first.", icon="cancel")
+            
             if ' ' not in valid_sequence:
-                raise CTkMessagebox(title="Error", message="Check peptide sequence has spaces between letters")
+                CTkMessagebox(title="Error", message="Check peptide sequence has spaces between letters", icon="cancel")
             elif invalid_amino_acids:
-                raise ValueError(f"Invalid amino acid(s): {', '.join(invalid_amino_acids)}. Check sequence is correct and entered as per the example")
+                CTkMessagebox(title="Error", message=f"Invalid amino acid(s): {', '.join(invalid_amino_acids)}. Check sequence is correct and entered as per the example", 
+                                    icon="cancel")
             else:
                 return "Your sequence is valid"
-
-            
 
 class App(customtkinter.CTk):
     '''Activates the GUI etc'''
@@ -88,6 +90,5 @@ class App(customtkinter.CTk):
         self.tabview.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
 if __name__ == "__main__":
-    from main import App
     app = App()
     app.mainloop()

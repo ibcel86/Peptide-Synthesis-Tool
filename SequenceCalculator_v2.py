@@ -45,14 +45,7 @@ class CalculatePeptide:
         self.tokens = self.original_tokens[::-1]
         # Finds invalid amino acids: those that are not in the .csv file
         invalid_amino_acids = [aa for aa in self.original_tokens if aa not in self.data.valid_amino_acids]
-        # Raises errors to the user to ensure they know how to input their sequence. If the sequence is valid, the code
-        # returns confirmation of validity      
-        if ' ' not in sequence:
-            raise ValueError(f"Check peptide sequence has spaces between letters")
-        elif invalid_amino_acids:
-            raise ValueError(f"Invalid amino acid(s): {', '.join(invalid_amino_acids)}. Check sequence is correct and entered as per the example")
-        else:
-            return "Your sequence is valid"
+        return invalid_amino_acids
 
     def calculate_sequence_mass(self):
         """Calculate mass of the sequence using the loaded DataFrame"""
@@ -60,8 +53,8 @@ class CalculatePeptide:
             raise ValueError("No sequence loaded. Run validate_user_sequence() first.")
         
         validated_sequence_mass = sum(self.data.mw_dict[aa] for aa in self.tokens)
+        return validated_sequence_mass
        
-
 class BuildSynthesisPlan():
     '''Calculates vial positions and rack assignments. Exports csv file that is read by the auto-reactor and auto-sampler
     to synthesise the peptide'''
@@ -134,6 +127,7 @@ class BuildSynthesisPlan():
         samples_per_vial = ceil(max_volume / inject_vol)
         num_vials_needed= ceil(num_deprotection_steps/samples_per_vial)
         
+        # Debug prints
         print(f"Peptide length: {num_deprotection_steps} amino acids")
         print(f"Number of deprotection vials required: {num_vials_needed} vials")
         print(f"Volume per deprotection vial: {max_volume} mL")
@@ -304,10 +298,7 @@ class BuildSynthesisPlan():
      #       raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
       #  return pd.read_csv(path)
 
-if __name__ == "__main__":
-    from gui import App
-    app = App()
-    app.mainloop()
+
 
 
 

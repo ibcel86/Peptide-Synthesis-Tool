@@ -4,9 +4,10 @@ from SequenceCalculator_v2 import CalculatePeptide, BuildSynthesisPlan
 
 
 class TabView(customtkinter.CTkTabview):
-    def __init__(self, master):
+    def __init__(self, master, output_text):
         super().__init__(master)
 
+        self.output_text = output_text
     
         # Tabs
         self.add("Synthesis Planner").grid_columnconfigure(0, weight=1)
@@ -37,20 +38,37 @@ class TabView(customtkinter.CTkTabview):
         self.calc = CalculatePeptide()
 
         try:
-            valid_sequence = self.calc.validate_user_sequence(sequence)
+            valid_sequence, invalid_amino_acids = self.calc.validate_user_sequence(sequence)
             self.tokens = self.calc.tokens
             original_tokens = self.calc.original_tokens
+            length, validated_sequence_mass = self.calc.calculate_sequence_mass()
+
             planner = BuildSynthesisPlan(self.tokens, original_tokens)
             df_vial_plan, vial_map = planner.vial_rack_positions()
             df_synth_plan = planner.build_synthesis_plan(vial_map)
 
+            # Output text
+            self.output_text.delete("1.0", "end")
+            self.output_text.insert("end", f"Peptide: {len(self.tokens)} amino acids\n")
+            self.output_text.insert("end", f"Mass: {validated_sequence_mass:.2f} g/mol\n\n")
+
             df_vial_plan.to_csv("vial plan.csv", index=False)
             df_synth_plan.to_csv("synthesis plan.csv", index=False)
 
+            self.output_text.insert("end", "CSV files saved as 'vial plan.csv' and 'synthesis plan.csv'.")
 
             CTkMessagebox(title="Success", message="CSV files saved successfully.", icon="check")
         except ValueError as e:
             CTkMessagebox(title="Error", message=str(e), icon="cancel")
+
+            if ' ' not in valid_sequence:
+                raise CTkMessagebox(title="Error", message="Check peptide sequence has spaces between letters")
+            elif invalid_amino_acids:
+                raise ValueError(f"Invalid amino acid(s): {', '.join(invalid_amino_acids)}. Check sequence is correct and entered as per the example")
+            else:
+                return "Your sequence is valid"
+
+            
 
 class App(customtkinter.CTk):
     '''Activates the GUI etc'''
@@ -63,6 +81,13 @@ class App(customtkinter.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        self.tabview = TabView(self)
+        self.output_text = customtkinter.CTkTextbox(self, height=100, width=600)
+        self.output_text.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+
+        self.tabview = TabView(self, self.output_text)
         self.tabview.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
+if __name__ == "__main__":
+    from main import App
+    app = App()
+    app.mainloop()

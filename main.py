@@ -1,6 +1,6 @@
 import customtkinter
 from CTkMessagebox import CTkMessagebox
-from SequenceCalculator_v2 import CalculatePeptide, BuildSynthesisPlan
+from SequenceCalculator_v2 import CalculatePeptide, BuildSynthesisPlan, LoadFile
 
 
 class TabView(customtkinter.CTkTabview):
@@ -33,40 +33,43 @@ class TabView(customtkinter.CTkTabview):
         self.submit_button_modify = customtkinter.CTkButton(self.tab("Modify Synthesis"), text="Submit", command=self.process_sequence)
         self.submit_button_modify.grid(row=2, column=0, padx=10, pady=10)
 
-    def process_sequence(self, sequence):
+    def process_sequence(self):
 
         try:
             sequence = self.entry.get()
-            self.tokens, invalid_amino_acids = CalculatePeptide.validate_user_sequence(sequence)
-            validated_sequence_mass = CalculatePeptide.calculate_sequence_mass(sequence)
-            
+            calc = CalculatePeptide()
+            self.tokens, calc.original_tokens, invalid_amino_acids = calc.validate_user_sequence(sequence)
+            validated_sequence_mass = calc.calculate_sequence_mass(sequence)
+
+            synthesis_plan = BuildSynthesisPlan(calc.tokens, calc.original_tokens)
+            df_vial_plan, vial_map = synthesis_plan.vial_rack_positions()
+            df_synth_plan = synthesis_plan.build_synthesis_plan(vial_map)
+
+            output_path = LoadFile.resource_path("")
+
+            df_vial_plan.to_csv("vial plan.csv", index=False)
+            df_synth_plan.to_csv("synthesis plan.csv", index=False)
+
 
             # Output text
             self.output_text.delete("1.0", "end")
-            self.output_text.insert("end", f"Peptide: {len(self.tokens)} amino acids\n")
-            self.output_text.insert("end", f"Mass: {validated_sequence_mass:.2f} g/mol\n\n")
-
-          #  df_vial_plan.to_csv("vial plan.csv", index=False)
-          #  df_synth_plan.to_csv("synthesis plan.csv", index=False)
-
-
-            CTkMessagebox(title="Success", message="CSV files saved successfully.", icon="check")
+            self.output_text.insert("end", f"Your peptide contains {len(self.tokens)} amino acids\n")
+            self.output_text.insert("end", f"Your peptide has a mass of: {validated_sequence_mass:.2f} g/mol\n\n")
 
             if ' ' not in sequence:
                 CTkMessagebox(title="Error", message="Check peptide sequence has spaces between letters", icon="cancel")
             elif not self.tokens:
                 CTkMessagebox(title="Error", message="No sequence loaded. Run validate_user_sequence() first.", icon="cancel")
             elif invalid_amino_acids:
-                CTkMessagebox(title="Error", message=f"Invalid amino acid(s): {', '.join(invalid_amino_acids)}. Check sequence is correct and entered as per the example", 
-                                    icon="cancel")
+                CTkMessagebox(title="Error", message=f"Invalid amino acid(s): {', '.join(invalid_amino_acids)} Check sequence is correct and entered as per the example"
+                              , icon="cancel")
             else:
-                return "Your sequence is valid", CTkMessagebox(title="Success", message="CSV files saved successfully.", icon="check")
+                return self.output_text.insert("end", f"Success!, your csv files saved in {output_path}")
 
 
         except ValueError as e:
             CTkMessagebox(title="Error", message=str(e), icon="cancel")
             
-           
 class App(customtkinter.CTk):
     '''Activates the GUI etc'''
     def __init__(self):

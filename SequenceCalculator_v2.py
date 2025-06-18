@@ -10,8 +10,8 @@ from collections import Counter
 
 class LoadFile:
     '''Loads csv file globally to be used in other functions and classes'''
-    @staticmethod
-    def resource_path(relative_path):
+    @classmethod
+    def resource_path(cls, relative_path):
         """Return the path to an external file located next to the .exe"""
         if getattr(sys, 'frozen', False):
             return os.path.join(os.path.dirname(sys.executable), relative_path)
@@ -20,13 +20,11 @@ class LoadFile:
     @classmethod
     def get_csv_path(cls):
         return cls.resource_path("amino_acids.csv")
-    
-path = LoadFile.get_csv_path()
         
 class DataLoader:
     '''Shared data access for amino acid information'''
     def __init__(self):
-        self.df = pd.read_csv(path)
+        self.df = pd.read_csv(LoadFile.get_csv_path())
         self.valid_amino_acids = set(self.df['AA'].str.strip())
         self.mw_dict = dict(zip(self.df['AA'], self.df['MW']))
 class CalculatePeptide:
@@ -45,9 +43,9 @@ class CalculatePeptide:
         self.tokens = self.original_tokens[::-1]
         # Finds invalid amino acids: those that are not in the .csv file
         invalid_amino_acids = [aa for aa in self.original_tokens if aa not in self.data.valid_amino_acids]
-        return invalid_amino_acids
+        return self.tokens, self.original_tokens, invalid_amino_acids
 
-    def calculate_sequence_mass(self):
+    def calculate_sequence_mass(self, sequence):
         """Calculate mass of the sequence using the loaded DataFrame"""
         if not self.tokens:
             raise ValueError("No sequence loaded. Run validate_user_sequence() first.")
@@ -127,11 +125,6 @@ class BuildSynthesisPlan():
         samples_per_vial = ceil(max_volume / inject_vol)
         num_vials_needed= ceil(num_deprotection_steps/samples_per_vial)
         
-        # Debug prints
-        print(f"Peptide length: {num_deprotection_steps} amino acids")
-        print(f"Number of deprotection vials required: {num_vials_needed} vials")
-        print(f"Volume per deprotection vial: {max_volume} mL")
-        
         return num_vials_needed
        
     def build_synthesis_plan(self, vial_map, max_deprotection_volume=16):
@@ -150,10 +143,11 @@ class BuildSynthesisPlan():
         last_position_needed = deprotection_start_pos + num_deprotection_vials - 1
         if last_position_needed > rack2_end_pos:
             available_positions = rack2_end_pos - deprotection_start_pos + 1
-            print(f"ERROR: Not enough rack space for deprotection vials!")
-            print(f"Rack 2 has positions {rack2_start_pos}-{rack2_end_pos}.")
-            print(f"Need {num_deprotection_vials} vials but only {available_positions} positions available.")
-            raise ValueError("Insufficient rack space for required deprotection vials")
+            raise ValueError(
+            f"ERROR: Not enough rack space for deprotection vials!\n"
+            f"Rack 2 has positions {rack2_start_pos}-{rack2_end_pos}.\n"
+            f"Need {num_deprotection_vials} vials but only {available_positions} positions available.\n"
+            f"Insufficient rack space for required deprotection vials")
 
         synthesis_rows = []
         vial_usage_counter = {}

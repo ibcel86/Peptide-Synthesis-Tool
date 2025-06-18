@@ -1,27 +1,21 @@
 # Ignore virtual environment
 venv/
-
 # Ignore test folders
 Sequences Test/
 Archive/
-
 # Ignore Python cache files
-__pycache__/
+**__pycache__**/
 *.py[cod]
 *.pyo
-
 # Ignore OS junk
 .DS_Store
 Thumbs.db
-
 # Ignore IDE/editor config
 .vscode/
 *.code-workspace
-
 # Ignore env/secret files
 .env
-
 # Ignore files
-.csv
-.xlsx
-.txt
+*.csv
+*.xlsx
+*.txt

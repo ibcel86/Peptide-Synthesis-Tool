@@ -50,7 +50,6 @@ class TabView(customtkinter.CTkTabview):
             df_vial_plan.to_csv("vial plan.csv", index=False)
             df_synth_plan.to_csv("synthesis plan.csv", index=False)
 
-
             # Output text and error messages
             self.output_text.delete("1.0", "end")
             self.output_text.insert("end", f"Your peptide contains {len(self.tokens)} amino acids\n")
@@ -65,24 +64,17 @@ class TabView(customtkinter.CTkTabview):
                               , icon="cancel")
             else:
                 return self.output_text.insert("end", f"Success!, your csv files saved in {output_path}")
-
-
         except ValueError as e:
             CTkMessagebox(title="Error", message=str(e), icon="cancel")
 
     def process_compared_sequences(self):
         '''Executes functions to compare sequences and output modified vial map and synthesis plan'''
         try:
-            entry = self.entry.get()
-            compared_sequences = CompareSequences()
-            previous_csv_files = compared_sequences.load_files()
-            self.original_tokens = compared_sequences.compare_sequences()
-
-            self.output_text.delete("1.0", "end")
-            self.output_text.insert("end", f"Previous sequence: {' '.join(self.original_tokens)} loaded" '\n' "Previous vial map loaded")
+            modified_sequence = self.entry.get()
         
         except ValueError as e:
             CTkMessagebox(title="Error", message=str(e), icon="cancel")
+
 class App(customtkinter.CTk):
     '''Activates the GUI etc'''
     def __init__(self):

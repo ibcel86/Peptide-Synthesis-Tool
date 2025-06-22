@@ -263,7 +263,7 @@ class CompareSequences():
         self.tokens = None
         self.original_tokens = None
 
-    def load_files(self):
+    def extract_old_sequence(self):
         '''Loads the old sequence by extracting it from the synthesis plan csv'''
         old_sequence = os.path.join(os.path.dirname(__file__), "synthesis plan.csv")
         if not os.path.exists(old_sequence):
@@ -280,17 +280,27 @@ class CompareSequences():
             for name in aa_rows['NAME']
         ]
 
-        self.original_tokens = cleaned_tokens[::-1]  # Restore original input order
-        self.tokens = cleaned_tokens  # Reverse if needed for synthesis order
+        self.original_tokens = cleaned_tokens
+        return cleaned_tokens, df
+
+    def load_previous_vial_map(self):
 
         old_vial_map = os.path.join(os.path.dirname(__file__), "vial plan.csv")
         if not os.path.exists(old_vial_map):
             raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
-        return pd.read_csv(old_vial_map), f"Previous sequence: {' '.join(self.original_tokens)} loaded" '\n' f"Previous vial map loaded" 
+        return f"Previous vial map loaded"
 
-    def compare_sequences(self, old_sequence, old_vial_map):
+    def compare_sequences(self, cleaned_tokens, modified_sequence):
         '''Compares sequences, returns the amino acids that are different between the sequences
         and appends the vial map and synthesis plan'''
+
+        different_tokens = []
+
+        for tokens in cleaned_tokens:
+            if tokens in modified_sequence != cleaned_tokens:
+                different_tokens.append()
+        
+                
 
         
 

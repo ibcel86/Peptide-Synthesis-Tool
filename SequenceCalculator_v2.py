@@ -288,8 +288,16 @@ class CompareSequences():
             raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
         return pd.read_csv(old_vial_map), f"Previous sequence: {' '.join(self.original_tokens)} loaded" '\n' f"Previous vial map loaded" 
 
-    def compare_sequences(self):
-        pass
+    def compare_sequences(self, old_sequence, old_vial_map):
+        '''Compares sequences, returns the amino acids that are different between the sequences
+        and appends the vial map and synthesis plan'''
+
+        
+
+
+        
+
+
 
 
 

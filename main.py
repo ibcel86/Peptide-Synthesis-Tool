@@ -76,6 +76,7 @@ class TabView(customtkinter.CTkTabview):
             entry = self.entry.get()
             compared_sequences = CompareSequences()
             previous_csv_files = compared_sequences.load_files()
+            self.original_tokens = compared_sequences.compare_sequences()
 
             self.output_text.delete("1.0", "end")
             self.output_text.insert("end", f"Previous sequence: {' '.join(self.original_tokens)} loaded" '\n' "Previous vial map loaded")

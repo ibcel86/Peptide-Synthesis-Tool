@@ -7,7 +7,6 @@ import re
 from math import *
 from collections import Counter
 
-
 class LoadFile:
     '''Loads csv file globally to be used in other functions and classes'''
     @classmethod
@@ -253,44 +252,44 @@ class BuildSynthesisPlan():
         df_synthesis_plan = pd.DataFrame(synthesis_rows)
         return df_synthesis_plan
 
-#class CompareSequences():
- #   '''Class loads old csv files so scientists can change the peptide sequence, eg: if they substitute
-  #  amino acids, this class runs logic to compare the sequences, finds the different amino acids (eg Pra in place of K)
-   # and appends the new vial to the end of the rack. The synthesis plan is also modified and saved as a new csv file along
-    #with the vial map.'''
+class CompareSequences():
+    '''Class loads old csv files so scientists can change the peptide sequence, eg: if they substitute
+    amino acids, this class runs logic to compare the sequences, finds the different amino acids (eg Pra in place of K)
+    and appends the new vial to the end of the rack. The synthesis plan is also modified and saved as a new csv file along
+    with the vial map.'''
 
-#    def __init__(self):
- #       self.data = DataLoader()
-  #      self.tokens = None
-   #     self.original_tokens = None
-#
- #   def load_old_sequence(self):
-  #      '''Loads the old sequence by extracting it from the synthesis plan csv'''
-   #     old_sequence = os.path.join(os.path.dirname(__file__), "synthesis plan.csv")
-    #    if not os.path.exists(path):
-     #       raise FileNotFoundError("Synthesis plan not found, please ensure the file is accessible.")
-      #  
-       # df = pd.read_csv(path)
+    def __init__(self):
+        self.data = DataLoader()
+        self.tokens = None
+        self.original_tokens = None
 
-#        # Filter out only the rows that are amino acid additions only
- #       aa_rows = df[~df['NAME'].str.contains('deprotection', case=False, na=False)]
+    def load_files(self):
+        '''Loads the old sequence by extracting it from the synthesis plan csv'''
+        old_sequence = os.path.join(os.path.dirname(__file__), "synthesis plan.csv")
+        if not os.path.exists(old_sequence):
+            raise FileNotFoundError("Synthesis plan not found, please ensure the file is accessible.")
+        
+        df = pd.read_csv(old_sequence)
+
+        # Filter out only the rows that are amino acid additions only
+        aa_rows = df[~df['NAME'].str.contains('deprotection', case=False, na=False)]
 
         # Extract the amino acid base names from the 'NAME' column by removing trailing digits
-  #      cleaned_tokens = [
-   #         re.sub(r'\d+$', '', name.strip())
-    #        for name in aa_rows['NAME']
-    #    ]
+        cleaned_tokens = [
+            re.sub(r'\d+$', '', name.strip())
+            for name in aa_rows['NAME']
+        ]
 
-  #      self.original_tokens = cleaned_tokens[::-1]  # Restore original input order
-   #     self.tokens = cleaned_tokens  # Reverse if needed for synthesis order
-#
- #       return f"Previous sequence: {' '.join(self.original_tokens)}"
+        self.original_tokens = cleaned_tokens[::-1]  # Restore original input order
+        self.tokens = cleaned_tokens  # Reverse if needed for synthesis order
 
-  #  def load_old_vial_map(self):
-   #     path = os.path.join(os.path.dirname(__file__), "vial map.csv")
-    #    if not os.path.exists(path):
-     #       raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
-      #  return pd.read_csv(path)
+        old_vial_map = os.path.join(os.path.dirname(__file__), "vial plan.csv")
+        if not os.path.exists(old_vial_map):
+            raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
+        return pd.read_csv(old_vial_map), f"Previous sequence: {' '.join(self.original_tokens)} loaded" '\n' f"Previous vial map loaded" 
+
+    def compare_sequences(self):
+        pass
 
 
 

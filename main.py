@@ -1,6 +1,6 @@
 import customtkinter
 from CTkMessagebox import CTkMessagebox
-from SequenceCalculator_v2 import CalculatePeptide, BuildSynthesisPlan, LoadFile
+from SequenceCalculator_v2 import CalculatePeptide, BuildSynthesisPlan, LoadFile, CompareSequences
 
 
 class TabView(customtkinter.CTkTabview):
@@ -27,14 +27,14 @@ class TabView(customtkinter.CTkTabview):
         self.title_modifysynthesis = customtkinter.CTkLabel(self.tab("Modify Synthesis"), text="Modify Synthesis")
         self.title_modifysynthesis.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
 
-        self.entry_modify = customtkinter.CTkEntry(self.tab("Modify Synthesis"), placeholder_text="Please enter your sequence eg T T Pra C: ")
+        self.entry_modify = customtkinter.CTkEntry(self.tab("Modify Synthesis"), placeholder_text="Please enter your modified sequence eg T T Pra C: ")
         self.entry_modify.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
-        self.entry_modify.bind("<Return>", lambda event: self.process_sequence())
-        self.submit_button_modify = customtkinter.CTkButton(self.tab("Modify Synthesis"), text="Submit", command=self.process_sequence)
+        self.entry_modify.bind("<Return>", lambda event: self.process_compared_sequences())
+        self.submit_button_modify = customtkinter.CTkButton(self.tab("Modify Synthesis"), text="Submit", command=self.process_compared_sequences)
         self.submit_button_modify.grid(row=2, column=0, padx=10, pady=10)
 
     def process_sequence(self):
-
+        '''Processes user input and outputs data with required outputs messages and error messages'''
         try:
             sequence = self.entry.get()
             calc = CalculatePeptide()
@@ -51,7 +51,7 @@ class TabView(customtkinter.CTkTabview):
             df_synth_plan.to_csv("synthesis plan.csv", index=False)
 
 
-            # Output text
+            # Output text and error messages
             self.output_text.delete("1.0", "end")
             self.output_text.insert("end", f"Your peptide contains {len(self.tokens)} amino acids\n")
             self.output_text.insert("end", f"Your peptide has a mass of: {validated_sequence_mass:.2f} g/mol\n\n")
@@ -69,7 +69,19 @@ class TabView(customtkinter.CTkTabview):
 
         except ValueError as e:
             CTkMessagebox(title="Error", message=str(e), icon="cancel")
-            
+
+    def process_compared_sequences(self):
+        '''Executes functions to compare sequences and output modified vial map and synthesis plan'''
+        try:
+            entry = self.entry.get()
+            compared_sequences = CompareSequences()
+            previous_csv_files = compared_sequences.load_files()
+
+            self.output_text.delete("1.0", "end")
+            self.output_text.insert("end", f"Previous sequence: {' '.join(self.original_tokens)} loaded" '\n' "Previous vial map loaded")
+        
+        except ValueError as e:
+            CTkMessagebox(title="Error", message=str(e), icon="cancel")
 class App(customtkinter.CTk):
     '''Activates the GUI etc'''
     def __init__(self):

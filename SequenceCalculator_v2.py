@@ -291,21 +291,24 @@ class CompareSequences():
             raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
         return f"Previous vial map loaded"
 
-    def compare_sequences(self, old_sequence, modified_sequence):
+    def compare_sequences(self, cleaned_tokens, modified_sequence):
         """Returns the new tokens at the end of the modified sequence that are different
         from the original sequence. For example:
         old = [T, T, Pra, C, Q, L, I, E]
         new = [T, T, Pra, C, I, L, I, K]
         --> returns ['I', 'K']"""
 
-        old_sequence = len(old_sequence)
+        old_sequence = len(cleaned_tokens)
         modified_sequence = len(modified_sequence)
         i = 1
 
-        while i <= min(old_len, new_len):
+        while i <= min(old_sequence, modified_sequence):
             if old_sequence[-i] != modified_sequence[-i]:
                 break
             i += 1 
+
+        divergence_index = modified_sequence - (i - 1)
+        return modified_sequence[divergence_index:]
 
 
 

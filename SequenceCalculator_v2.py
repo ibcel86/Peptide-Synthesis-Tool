@@ -280,8 +280,9 @@ class CompareSequences():
             for name in aa_rows['NAME']
         ]
 
-        self.original_tokens = cleaned_tokens
-        return cleaned_tokens, df
+        # Return the original sequence by reversing the extracted sequence from the csv file
+        self.original_tokens = cleaned_tokens[::-1]
+        return cleaned_tokens
 
     def load_previous_vial_map(self):
 

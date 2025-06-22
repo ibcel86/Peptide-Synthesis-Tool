@@ -290,15 +290,25 @@ class CompareSequences():
             raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
         return f"Previous vial map loaded"
 
-    def compare_sequences(self, cleaned_tokens, modified_sequence):
-        '''Compares sequences, returns the amino acids that are different between the sequences
-        and appends the vial map and synthesis plan'''
+    def compare_sequences(self, old_sequence, modified_sequence):
+        """Returns the new tokens at the end of the modified sequence that are different
+        from the original sequence. For example:
+        old = [T, T, Pra, C, Q, L, I, E]
+        new = [T, T, Pra, C, I, L, I, K]
+        --> returns ['I', 'K']"""
 
-        different_tokens = []
+        old_sequence = len(old_sequence)
+        modified_sequence = len(modified_sequence)
+        i = 1
 
-        for tokens in cleaned_tokens:
-            if tokens in modified_sequence != cleaned_tokens:
-                different_tokens.append()
+        while i <= min(old_len, new_len):
+            if old_sequence[-i] != modified_sequence[-i]:
+                break
+            i += 1 
+
+
+
+        
         
                 
 

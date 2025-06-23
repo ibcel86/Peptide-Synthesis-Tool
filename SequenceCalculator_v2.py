@@ -298,20 +298,26 @@ class CompareSequences():
         new = [T, T, Pra, C, I, L, I, K]
         --> returns ['I', 'K']"""
 
-        old_sequence = len(cleaned_tokens)
-        modified_sequence = len(modified_sequence)
-        i = 1
-
-        while i <= min(old_sequence, modified_sequence):
-            if old_sequence[-i] != modified_sequence[-i]:
+        for i in range(min(len(cleaned_tokens), len(modified_sequence))):
+            if cleaned_tokens[i] != modified_sequence[i]:
                 break
-            i += 1 
+        else:
+            # If no difference was found in common range
+            i = min(len(cleaned_tokens), len(modified_sequence))
 
-        divergence_index = modified_sequence - (i - 1)
-        return modified_sequence[divergence_index:]
+        # Return the part of the modified sequence that differs
+        return modified_sequence[i:]
+    
+    def build_new_vial_map(self):
+        '''Takes in the modified sequence that extracts the novel amino acids and appends them
+        to the new vial map and re-calculates occurrences'''
+        pass
 
-        
-        
+    def build_new_synthesis_plan(self):
+        '''Builds a new synthesis plan for the modified sequence and appends the vials to the end of 
+        the rack, and moves the positions of the deprotection vials if rack space spills over'''
+        pass
+
 ### Debug Function Tests ### 
 
     @staticmethod

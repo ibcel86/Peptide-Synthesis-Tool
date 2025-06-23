@@ -292,7 +292,7 @@ class CompareSequences():
         return f"Previous vial map loaded"
 
     def compare_sequences(self, cleaned_tokens, modified_sequence):
-        """Returns the new tokens at the end of the modified sequence that are different
+        """Returns the new tokens in the modified sequence that are different
         from the original sequence. For example:
         old = [T, T, Pra, C, Q, L, I, E]
         new = [T, T, Pra, C, I, L, I, K]
@@ -310,15 +310,28 @@ class CompareSequences():
         divergence_index = modified_sequence - (i - 1)
         return modified_sequence[divergence_index:]
 
-
-
         
         
-                
+### Debug Function Tests ### 
+
+    @staticmethod
+    def debug_compare_sequences():
+        cleaned_tokens = ['T', 'T', 'Pra', 'C', 'Q', 'L', 'I', 'E']
+        modified_sequence = ['T', 'T', 'Pra', 'C', 'I', 'L', 'I', 'K']
+
+        # Find index where sequences start to differ
+        for i in range(min(len(cleaned_tokens), len(modified_sequence))):
+            if cleaned_tokens[i] != modified_sequence[i]:
+                break
+        else:
+            # If no difference was found in common range
+            i = min(len(cleaned_tokens), len(modified_sequence))
+
+        # Return the part of the modified sequence that differs
+        print(modified_sequence[i:])
 
         
-
-
+CompareSequences.debug_compare_sequences()
         
 
 

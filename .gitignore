@@ -14,7 +14,7 @@ Thumbs.db
 .vscode/
 *.code-workspace
 # Ignore env/secret files
-.env
+*.env
 # Ignore files
 *.csv
 *.xlsx

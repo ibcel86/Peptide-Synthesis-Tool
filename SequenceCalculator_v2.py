@@ -308,9 +308,10 @@ class CompareSequences():
         # Return the part of the modified sequence that differs
         return modified_sequence[i:]
     
-    def build_new_vial_map(self):
+    def build_new_vial_map(self, modified_sequence):
         '''Takes in the modified sequence that extracts the novel amino acids and appends them
         to the new vial map and re-calculates occurrences'''
+        
         pass
 
     def build_new_synthesis_plan(self):
@@ -320,24 +321,24 @@ class CompareSequences():
 
 ### Debug Function Tests ### 
 
-    @staticmethod
-    def debug_compare_sequences():
-        cleaned_tokens = ['T', 'T', 'Pra', 'C', 'Q', 'L', 'I', 'E']
-        modified_sequence = ['T', 'T', 'Pra', 'C', 'I', 'L', 'I', 'K']
-
-        # Find index where sequences start to differ
-        for i in range(min(len(cleaned_tokens), len(modified_sequence))):
-            if cleaned_tokens[i] != modified_sequence[i]:
-                break
-        else:
-            # If no difference was found in common range
-            i = min(len(cleaned_tokens), len(modified_sequence))
-
-        # Return the part of the modified sequence that differs
-        print(modified_sequence[i:])
+#    @staticmethod
+#    def debug_compare_sequences():
+#        cleaned_tokens = ['T', 'T', 'Pra', 'C', 'Q', 'L', 'I', 'E']
+#        modified_sequence = ['T', 'T', 'Pra', 'C', 'I', 'L', 'I', 'K']
+#
+#        # Find index where sequences start to differ
+#        for i in range(min(len(cleaned_tokens), len(modified_sequence))):
+#            if cleaned_tokens[i] != modified_sequence[i]:
+#                break
+#        else:
+#            # If no difference was found in common range
+#            i = min(len(cleaned_tokens), len(modified_sequence))
+#
+#        # Return the part of the modified sequence that differs
+#        print(modified_sequence[i:])
 
         
-CompareSequences.debug_compare_sequences()
+#CompareSequences.debug_compare_sequences()
         
 
 

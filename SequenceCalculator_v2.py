@@ -318,15 +318,7 @@ class CompareSequences():
         '''Takes in the modified sequence that extracts the novel amino acids and appends them
         to the new vial map and re-calculates occurrences'''
 
-        modified_sequence = ['R', 'I']  # example new sequence
-        prev_map = occ_data[0].copy()  # Copy to avoid mutating original
-        message = occ_data[1]
-
-        for aa in modified_sequence:
-            if aa not in prev_map:
-                prev_map.append(aa)
-
-        return prev_map, message
+        pass 
 
     def build_new_synthesis_plan(self):
         '''Builds a new synthesis plan for the modified sequence and appends the vials to the end of 

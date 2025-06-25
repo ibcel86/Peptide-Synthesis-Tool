@@ -289,7 +289,13 @@ class CompareSequences():
         old_vial_map = os.path.join(os.path.dirname(__file__), "vial plan.csv")
         if not os.path.exists(old_vial_map):
             raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
-        return f"Previous vial map loaded"
+        
+        df = pd.read_csv(old_vial_map)
+
+        # Filter just the vial map sequences
+        occ_data = df['Amino Acid'].tolist()
+
+        return occ_data, f"Previous vial map loaded"
 
     def compare_sequences(self, cleaned_tokens, modified_sequence):
         """Returns the new tokens in the modified sequence that are different
@@ -308,15 +314,24 @@ class CompareSequences():
         # Return the part of the modified sequence that differs
         return modified_sequence[i:]
     
-    def build_new_vial_map(self, modified_sequence):
+    def build_new_vial_map(self, occ_data):
         '''Takes in the modified sequence that extracts the novel amino acids and appends them
         to the new vial map and re-calculates occurrences'''
-        
-        pass
+
+        modified_sequence = ['R', 'I']  # example new sequence
+        prev_map = occ_data[0].copy()  # Copy to avoid mutating original
+        message = occ_data[1]
+
+        for aa in modified_sequence:
+            if aa not in prev_map:
+                prev_map.append(aa)
+
+        return prev_map, message
 
     def build_new_synthesis_plan(self):
         '''Builds a new synthesis plan for the modified sequence and appends the vials to the end of 
         the rack, and moves the positions of the deprotection vials if rack space spills over'''
+        
         pass
 
 ### Debug Function Tests ### 
@@ -337,13 +352,10 @@ class CompareSequences():
 #        # Return the part of the modified sequence that differs
 #        print(modified_sequence[i:])
 
-        
-#CompareSequences.debug_compare_sequences()
-        
 
-
-
-
+map = CompareSequences()
+occ_data = map.load_previous_vial_map()
+print(map.build_new_vial_map(occ_data))
 
 
 

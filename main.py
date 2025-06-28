@@ -2,7 +2,6 @@ import customtkinter
 from CTkMessagebox import CTkMessagebox
 from SequenceCalculator_v2 import CalculatePeptide, BuildSynthesisPlan, LoadFile, CompareSequences
 
-
 class TabView(customtkinter.CTkTabview):
     def __init__(self, master, output_text):
         super().__init__(master)

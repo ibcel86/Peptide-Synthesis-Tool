@@ -312,19 +312,19 @@ class CompareSequences():
             i = min(len(cleaned_tokens), len(modified_sequence))
 
         # Return the part of the modified sequence that differs
-        return modified_sequence[i:]
+        return modified_sequence[i:], CalculatePeptide.calculate_sequence_mass(modified_sequence)
     
-    def build_new_vial_map(self, occ_data):
-        '''Takes in the modified sequence that extracts the novel amino acids and appends them
-        to the new vial map and re-calculates occurrences'''
-
-        pass 
-
-    def build_new_synthesis_plan(self):
-        '''Builds a new synthesis plan for the modified sequence and appends the vials to the end of 
-        the rack, and moves the positions of the deprotection vials if rack space spills over'''
+    def build_new_vial_map_and_synthesis_plan(self, occ_data, modified_sequence):
+        '''Takes in the modified sequence and appends to vial plan, recalculates vial map with new amino
+        acids appended to the end of the sequence, then generates new synthesis plan and vial map'''
         
-        pass
+        extended_occ_data = occ_data.extend(modified_sequence)
+
+        new_vial_map = BuildSynthesisPlan.vial_rack_positions(extended_occ_data)
+
+        new_synth_plan = BuildSynthesisPlan(modified_sequence)
+
+        return pd.DataFrame(new_vial_map), pd.DataFrame(new_synth_plan)
 
 ### Debug Function Tests ### 
 
@@ -345,9 +345,24 @@ class CompareSequences():
 #        print(modified_sequence[i:])
 
 
-map = CompareSequences()
-occ_data = map.load_previous_vial_map()
-print(map.build_new_vial_map(occ_data))
+# map = CompareSequences()
+# occ_data = map.load_previous_vial_map()
+# print(map.build_new_vial_map(occ_data))
+
+
+#    @staticmethod
+#    def debug_build_new_vial_map():
+#        '''Takes in the modified sequence and appends to vial plan once occurrence is calculated'''
+#        
+#        occ_data = ['T', 'T', 'Pra', 'C', 'Q', 'T']
+#
+#        modified_sequence = ['Q', 'I', 'L']
+#
+#        occ_data.extend(modified_sequence)
+#
+#        print(occ_data)
+
+# CompareSequences.debug_build_new_vial_map()
 
 
 

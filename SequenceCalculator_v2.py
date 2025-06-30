@@ -293,76 +293,32 @@ class CompareSequences():
         df = pd.read_csv(old_vial_map)
 
         # Filter just the vial map sequences
-        occ_data = df['Amino Acid'].tolist()
+        old_vial_data = df['Amino Acid'].tolist()
 
-        return occ_data, f"Previous vial map loaded"
+        return old_vial_data, f"Previous vial map loaded"
 
-    def compare_sequences(self, cleaned_tokens, modified_sequence):
+    def compare_sequences(self, cleaned_tokens, new_aa):
         """Returns the new tokens in the modified sequence that are different
         from the original sequence. For example:
         old = [T, T, Pra, C, Q, L, I, E]
         new = [T, T, Pra, C, I, L, I, K]
         --> returns ['I', 'K']"""
 
-        for i in range(min(len(cleaned_tokens), len(modified_sequence))):
-            if cleaned_tokens[i] != modified_sequence[i]:
+        for i in range(min(len(cleaned_tokens), len(new_aa)))):
+            if cleaned_tokens[i] != new_aa[i]:
                 break
         else:
             # If no difference was found in common range
-            i = min(len(cleaned_tokens), len(modified_sequence))
+            i = min(len(cleaned_tokens), len(new_aa))
 
         # Return the part of the modified sequence that differs
-        return modified_sequence[i:], CalculatePeptide.calculate_sequence_mass(modified_sequence)
+        return new_aa[i:]
     
-    def build_new_vial_map_and_synthesis_plan(self, occ_data, modified_sequence):
-        '''Takes in the modified sequence and appends to vial plan, recalculates vial map with new amino
-        acids appended to the end of the sequence, then generates new synthesis plan and vial map'''
+    def build_new_vial_map(self, old_vial_data, new_aa):
+        '''Takes in the new amino acods, recalculates occurrence, then generates new vial plan
+        with new amino acids appended to the end of the vial map'''
+        pass
         
-        extended_occ_data = occ_data.extend(modified_sequence)
 
-        new_vial_map = BuildSynthesisPlan.vial_rack_positions(extended_occ_data)
-
-        new_synth_plan = BuildSynthesisPlan(modified_sequence)
-
-        return pd.DataFrame(new_vial_map), pd.DataFrame(new_synth_plan)
-
-### Debug Function Tests ### 
-
-#    @staticmethod
-#    def debug_compare_sequences():
-#        cleaned_tokens = ['T', 'T', 'Pra', 'C', 'Q', 'L', 'I', 'E']
-#        modified_sequence = ['T', 'T', 'Pra', 'C', 'I', 'L', 'I', 'K']
-#
-#        # Find index where sequences start to differ
-#        for i in range(min(len(cleaned_tokens), len(modified_sequence))):
-#            if cleaned_tokens[i] != modified_sequence[i]:
-#                break
-#        else:
-#            # If no difference was found in common range
-#            i = min(len(cleaned_tokens), len(modified_sequence))
-#
-#        # Return the part of the modified sequence that differs
-#        print(modified_sequence[i:])
-
-
-# map = CompareSequences()
-# occ_data = map.load_previous_vial_map()
-# print(map.build_new_vial_map(occ_data))
-
-
-#    @staticmethod
-#    def debug_build_new_vial_map():
-#        '''Takes in the modified sequence and appends to vial plan once occurrence is calculated'''
-#        
-#        occ_data = ['T', 'T', 'Pra', 'C', 'Q', 'T']
-#
-#        modified_sequence = ['Q', 'I', 'L']
-#
-#        occ_data.extend(modified_sequence)
-#
-#        print(occ_data)
-
-# CompareSequences.debug_build_new_vial_map()
-
-
-
+    def build_new_synthesis_plan():
+        pass

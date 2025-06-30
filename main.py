@@ -69,7 +69,35 @@ class TabView(customtkinter.CTkTabview):
     def process_compared_sequences(self):
         '''Executes functions to compare sequences and output modified vial map and synthesis plan'''
         try:
-            modified_sequence = self.entry.get()
+            new_sequence = self.entry.get()
+            calc = CalculatePeptide()
+            modified_sequence = CompareSequences()
+            occ_data = modified_sequence.load_previous_vial_map()
+            self.tokens, calc.original_tokens, invalid_amino_acids = calc.validate_user_sequence(new_sequence)
+            validated_sequence_mass = calc.calculate_sequence_mass(new_sequence)
+
+            new_plans = modified_sequence.build_new_vial_map_and_synthesis_plan(occ_data, modified_sequence)
+
+            new_plans.to_csv("Modified Vial Plan", index=False)
+
+            output_path = LoadFile.resource_path("")
+
+            # Output text and error messages
+            self.output_text.delete("1.0", "end")
+            self.output_text.insert("end", f"Your peptide contains {len(self.tokens)} amino acids\n")
+            self.output_text.insert("end", f"Your peptide has a mass of: {validated_sequence_mass:.2f} g/mol\n\n")
+
+            if ' ' not in new_sequence:
+                CTkMessagebox(title="Error", message="Check peptide sequence has spaces between letters", icon="cancel")
+            elif not self.tokens:
+                CTkMessagebox(title="Error", message="No sequence loaded. Run validate_user_sequence() first.", icon="cancel")
+            elif invalid_amino_acids:
+                CTkMessagebox(title="Error", message=f"Invalid amino acid(s): {', '.join(invalid_amino_acids)} Check sequence is correct and entered as per the example"
+                              , icon="cancel")
+            else:
+                return self.output_text.insert("end", f"Success!, your csv files saved in {output_path}")
+        except ValueError as e:
+            CTkMessagebox(title="Error", message=str(e), icon="cancel")
         
         except ValueError as e:
             CTkMessagebox(title="Error", message=str(e), icon="cancel")

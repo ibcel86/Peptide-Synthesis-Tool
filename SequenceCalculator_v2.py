@@ -61,34 +61,26 @@ class BuildSynthesisPlan():
         self.tokens = tokens  # This obtains the reversed sequence to ensure correct synthesis order
         self.original_tokens = original_tokens or tokens  # Required original sequence order for some calculations
         
-    def vial_rack_positions(self, conc=0.4, max_occurrence=6, max_volume=16):
-        '''Finds the number of occurrences for each amino acid to find how many vials
-        and racks are needed based on vial size and concentration. Builds a map of vials and assigns
-        vials to a specific rack'''
-        
-        amino_acid_occurrences = Counter(self.tokens)
+    def vial_rack_positions(self, tokens, conc=0.4, max_occurrence=6, max_volume=16, start_rack=1, start_position=1):
+        '''Generates vial map, checks position of previous map when compare sequences is run'''
+
+        amino_acid_occurrences = Counter(tokens)
         max_per_vial = floor(max_volume / 2.5)
-        # Vial position logic: tracks vials and racks to ensure vials and racks are in correct order of synthesis,
-        # splits vials if the volume exceeds max volume per vial. Split vials are named with a number.
         output = []
         vial_map = {} 
 
-        rack = 1
-        position = 1
+        rack = start_rack
+        position = start_position
         max_positions = 27 
 
         for aa, count in amino_acid_occurrences.items():
             mw = self.data.mw_dict[aa]
 
-            if count <= max_per_vial:
-                splits = [count]
-            else:
-                splits = []
-                remaining = count
-                while remaining > 0:
-                    chunk = min(remaining, max_per_vial)
-                    splits.append(chunk)
-                    remaining -= chunk
+            splits = []
+            while count > 0:
+                chunk = min(count, max_per_vial)
+                splits.append(chunk)
+                count -= chunk
 
             for i, split_count in enumerate(splits):
                 name = aa if i == 0 else f"{aa}{i+1}"
@@ -114,8 +106,7 @@ class BuildSynthesisPlan():
                     rack += 1
                     position = 1
 
-        df_output = pd.DataFrame(output)
-        return df_output, vial_map
+        return pd.DataFrame(output), vial_map
     
     def calculate_deprotection_vials_needed(self, max_volume=16, inject_vol=1.5):
         '''Calculate the number of deprotection vials needed based on peptide length and max vial volume'''
@@ -258,12 +249,13 @@ class CompareSequences():
     and appends the new vial to the end of the rack. The synthesis plan is also modified and saved as a new csv file along
     with the vial map.'''
 
-    def __init__(self):
+    def __init__(self, builder_instance):
         self.data = DataLoader()
         self.tokens = None
         self.original_tokens = None
+        self.builder = builder_instance
 
-    def extract_old_sequence(self):
+    def extract_old_sequence_from_csv(self):
         '''Loads the old sequence by extracting it from the synthesis plan csv'''
         old_sequence = os.path.join(os.path.dirname(__file__), "synthesis plan.csv")
         if not os.path.exists(old_sequence):
@@ -284,19 +276,6 @@ class CompareSequences():
         self.original_tokens = cleaned_tokens[::-1]
         return cleaned_tokens
 
-    def load_previous_vial_map(self):
-
-        old_vial_map = os.path.join(os.path.dirname(__file__), "vial plan.csv")
-        if not os.path.exists(old_vial_map):
-            raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
-        
-        df = pd.read_csv(old_vial_map)
-
-        # Filter just the vial map sequences
-        old_vial_data = df['Amino Acid'].tolist()
-
-        return old_vial_data, f"Previous vial map loaded"
-
     def compare_sequences(self, cleaned_tokens, new_aa):
         """Returns the new tokens in the modified sequence that are different
         from the original sequence. For example:
@@ -311,13 +290,56 @@ class CompareSequences():
             # If no difference was found in common range
             i = min(len(cleaned_tokens), len(new_aa))
 
-        # Return the part of the modified sequence that differs
+        # Returns old vial data, differing amino acids
         return new_aa[i:]
     
-    def build_new_vial_map(self):
-        '''Takes in the new amino acods, recalculates occurrence, then generates new vial plan
+    def build_new_vial_map(self, new_aa):
+        '''Takes in the new amino acids, recalculates occurrence, then generates new vial plan
         with new amino acids appended to the end of the vial map'''
-        pass
 
-    def build_new_synthesis_plan():
-        pass
+        old_vial_path = os.path.join(os.path.dirname(__file__), "vial plan.csv")
+        if not os.path.exists(old_vial_path):
+            raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
+
+        df_old = pd.read_csv(old_vial_path)
+
+        # Find last rack and position
+        last_row = df_old.loc[df_old['Rack'].idxmax()]
+        last_rack = last_row['Rack']
+        last_position = df_old[df_old['Rack'] == last_rack]['Position'].max()
+
+        # Compute starting rack and position
+        if last_position >= 27:
+            start_rack = last_rack + 1
+            start_position = 1
+        else:
+            start_rack = last_rack
+            start_position = last_position + 1
+
+        # Generate new vial plan
+        df_new, _ = self.vial_rack_positions(
+            tokens=new_aa,
+            start_rack=start_rack,
+            start_position=start_position
+        )
+
+        # Append and return combined vial map
+        df_combined = pd.concat([df_old, df_new], ignore_index=True)
+        return df_combined
+
+    def build_new_synthesis_plan(self, df_combined, max_deprotection_volume=16):
+        """
+        Rebuild the full synthesis plan using a combined vial map (old + new).
+        Assumes self.tokens contains the full AA sequence.
+        """
+        # Step 1: Convert df_combined to vial_map format
+        vial_map = {}
+        for _, row in df_combined.iterrows():
+            name = row["Amino Acid"]
+            rack = int(row["Rack"])
+            position = int(row["Position"])
+            occurrences = int(row["Occurrences"])
+            vial_map[name] = (rack, position, occurrences)
+
+        # Step 2: Call your existing build_synthesis_plan
+        return self.builder.build_synthesis_plan(vial_map, max_deprotection_volume=max_deprotection_volume)

@@ -304,7 +304,7 @@ class CompareSequences():
         new = [T, T, Pra, C, I, L, I, K]
         --> returns ['I', 'K']"""
 
-        for i in range(min(len(cleaned_tokens), len(new_aa)))):
+        for i in range(min(len(cleaned_tokens), len(new_aa))):
             if cleaned_tokens[i] != new_aa[i]:
                 break
         else:
@@ -314,11 +314,10 @@ class CompareSequences():
         # Return the part of the modified sequence that differs
         return new_aa[i:]
     
-    def build_new_vial_map(self, old_vial_data, new_aa):
+    def build_new_vial_map(self):
         '''Takes in the new amino acods, recalculates occurrence, then generates new vial plan
         with new amino acids appended to the end of the vial map'''
         pass
-        
 
     def build_new_synthesis_plan():
         pass

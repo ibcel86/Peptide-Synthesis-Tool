@@ -317,7 +317,7 @@ class CompareSequences():
             start_position = last_position + 1
 
         # Generate new vial plan
-        df_new, _ = self.vial_rack_positions(
+        df_new, _ = self.builder.vial_rack_positions(
             tokens=new_aa,
             start_rack=start_rack,
             start_position=start_position
@@ -332,7 +332,7 @@ class CompareSequences():
         Rebuild the full synthesis plan using a combined vial map (old + new).
         Assumes self.tokens contains the full AA sequence.
         """
-        # Step 1: Convert df_combined to vial_map format
+        # Call vial map to replan synthesis
         vial_map = {}
         for _, row in df_combined.iterrows():
             name = row["Amino Acid"]
@@ -341,5 +341,7 @@ class CompareSequences():
             occurrences = int(row["Occurrences"])
             vial_map[name] = (rack, position, occurrences)
 
-        # Step 2: Call your existing build_synthesis_plan
-        return self.builder.build_synthesis_plan(vial_map, max_deprotection_volume=max_deprotection_volume)
+        # Call synthesis plan and then call the dataframe
+        new_synth = self.builder.build_synthesis_plan(vial_map, max_deprotection_volume=max_deprotection_volume)
+
+        return pd.DataFrame(new_synth)

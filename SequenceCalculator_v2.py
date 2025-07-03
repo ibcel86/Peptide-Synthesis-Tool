@@ -293,55 +293,61 @@ class CompareSequences():
         # Returns old vial data, differing amino acids
         return new_aa[i:]
     
-    def build_new_vial_map(self, new_aa):
-        '''Takes in the new amino acids, recalculates occurrence, then generates new vial plan
-        with new amino acids appended to the end of the vial map'''
-
-        old_vial_path = os.path.join(os.path.dirname(__file__), "vial plan.csv")
-        if not os.path.exists(old_vial_path):
-            raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
-
-        df_old = pd.read_csv(old_vial_path)
-
-        # Find last rack and position
-        last_row = df_old.loc[df_old['Rack'].idxmax()]
-        last_rack = last_row['Rack']
-        last_position = df_old[df_old['Rack'] == last_rack]['Position'].max()
-
-        # Compute starting rack and position
-        if last_position >= 27:
-            start_rack = last_rack + 1
-            start_position = 1
-        else:
-            start_rack = last_rack
-            start_position = last_position + 1
+    #### Change code to take the returned AAs to I* so that when the sequence is re-run through the 
+    #### vial map, it appends it to the end of the vial map. Upon amend make sure code removes the * from
+    #### the amino acid so the vial map appends it to the end.
+    
+   # def build_new_vial_map(self, new_aa):
+    #    '''Takes in the new amino acids, recalculates occurrence, then generates new vial plan
+     #   with new amino acids appended to the end of the vial map'''
+#
+ #       old_vial_path = os.path.join(os.path.dirname(__file__), "vial plan.csv")
+  #      if not os.path.exists(old_vial_path):
+   #         raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
+#
+ #       df_old = pd.read_csv(old_vial_path)
+#
+ #       # Find last rack and position
+  #      last_row = df_old.loc[df_old['Rack'].idxmax()]
+   #     last_rack = last_row['Rack']
+    #    last_position = df_old[df_old['Rack'] == last_rack]['Position'].max()
+#
+ #       # Compute starting rack and position
+  #      if last_position >= 27:
+   #         start_rack = last_rack + 1
+    #        start_position = 1
+     #   else:
+      #      start_rack = last_rack
+       #     start_position = last_position + 1
 
         # Generate new vial plan
-        df_new, _ = self.builder.vial_rack_positions(
-            tokens=new_aa,
-            start_rack=start_rack,
-            start_position=start_position
-        )
+       # df_new, _ = self.builder.vial_rack_positions(
+       #     tokens=new_aa,
+       #     start_rack=start_rack,
+       #     start_position=start_position
+       # )
 
         # Append and return combined vial map
-        df_combined = pd.concat([df_old, df_new], ignore_index=True)
-        return df_combined
+        #df_combined = pd.concat([df_old, df_new], ignore_index=True)
+        #return df_combined
 
-    def build_new_synthesis_plan(self, df_combined, max_deprotection_volume=16):
-        """
-        Rebuild the full synthesis plan using a combined vial map (old + new).
-        Assumes self.tokens contains the full AA sequence.
-        """
-        # Call vial map to replan synthesis
-        vial_map = {}
-        for _, row in df_combined.iterrows():
-            name = row["Amino Acid"]
-            rack = int(row["Rack"])
-            position = int(row["Position"])
-            occurrences = int(row["Occurrences"])
-            vial_map[name] = (rack, position, occurrences)
+   # def build_new_synthesis_plan(self, df_combined, max_deprotection_volume=16):
+   #     """
+    #    Rebuild the full synthesis plan using a combined vial map (old + new).
+     #   Assumes self.tokens contains the full AA sequence.
+     #   """
+    #    # Call vial map to replan synthesis
+     #   vial_map = {}
+      #  for _, row in df_combined.iterrows():
+      #      name = row["Amino Acid"]
+      #      rack = int(row["Rack"])
+      #      position = int(row["Position"])
+       #     occurrences = int(row["Occurrences"])
+      #      vial_map[name] = (rack, position, occurrences)
 
         # Call synthesis plan and then call the dataframe
-        new_synth = self.builder.build_synthesis_plan(vial_map, max_deprotection_volume=max_deprotection_volume)
+        #new_synth = self.builder.build_synthesis_plan(vial_map, max_deprotection_volume=max_deprotection_volume)
 
-        return pd.DataFrame(new_synth)
+        #return pd.DataFrame(new_synth)
+
+#### Fix the commented out code with the new vial naming method so that the correct appends to the csv

@@ -101,7 +101,7 @@ D50,0.889,0.444,0.0,True,21,0.1,32,0.24,False,4,75,75,False,True,2,4
 deprotection 50,0.0,0.0,0.8,True,21,0.1,32,0.1,False,4,75,75,False,True,2,4
 C51,0.889,0.444,0.0,True,10,0.1,32,0.24,False,4,75,75,False,True,2,4
 deprotection 51,0.0,0.0,0.8,True,10,0.1,32,0.1,False,4,75,75,False,True,2,4
-T52,0.889,0.444,0.0,True,19,0.1,32,0.24,False,4,75,75,False,True,2,4
-deprotection 52,0.0,0.0,0.8,True,19,0.1,32,0.1,False,4,75,75,False,True,2,4
-A53,0.889,0.444,0.0,True,14,0.1,32,0.24,False,4,75,75,False,True,2,4
-deprotection 53,0.0,0.0,0.8,True,14,0.1,32,0.1,False,4,75,75,False,True,2,4
+Q52,0.889,0.444,0.0,True,15,0.1,32,0.24,False,4,75,75,False,True,2,4
+deprotection 52,0.0,0.0,0.8,True,15,0.1,32,0.1,False,4,75,75,False,True,2,4
+Pra53,0.889,0.444,0.0,True,17,0.1,32,0.24,False,4,75,75,False,True,2,4
+deprotection 53,0.0,0.0,0.8,True,17,0.1,32,0.1,False,4,75,75,False,True,2,4

@@ -83,7 +83,7 @@ class TabView(customtkinter.CTkTabview):
         '''Executes functions to compare sequences and output modified vial map and synthesis plan'''
         try:
             new_sequence = self.entry_modify.get()
-            
+
             # Early validation checks
             if ' ' not in new_sequence:
                 CTkMessagebox(title="Error", message="Check peptide sequence has spaces between letters", icon="cancel")
@@ -110,6 +110,7 @@ class TabView(customtkinter.CTkTabview):
             print(f"DEBUG: New sequence (self.tokens): {self.tokens}")
             new_only = comparison.compare_sequences(old_sequence, self.tokens)
             df_combined = comparison.build_new_vial_map(new_only)
+            comparison.tokens = self.tokens
             new_synthesis_plan = comparison.build_new_synthesis_plan(df_combined)
 
             # Get the correct output path

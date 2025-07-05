@@ -5,6 +5,7 @@ import pandas as pd
 import openpyxl
 import re
 from math import *
+from math import ceil
 from collections import Counter
 
 class LoadFile:
@@ -277,77 +278,138 @@ class CompareSequences():
         return cleaned_tokens
 
     def compare_sequences(self, cleaned_tokens, new_aa):
-        """Returns the new tokens in the modified sequence that are different
-        from the original sequence. For example:
+        """Returns the amino acids in the new sequence that differ from the original.
+        Each differing amino acid is marked with '*'.
+        Example:
         old = [T, T, Pra, C, Q, L, I, E]
         new = [T, T, Pra, C, I, L, I, K]
-        --> returns ['I', 'K']"""
+        --> returns ['I*', 'K*']
+        """
 
-        for i in range(min(len(cleaned_tokens), len(new_aa))):
-            if cleaned_tokens[i] != new_aa[i]:
-                break
+        differences = []
+
+        for old, new in zip(cleaned_tokens, new_aa):
+            if old != new:
+                differences.append(new + "*")
+
+        # If new_aa is longer than cleaned_tokens, mark the extras too
+        if len(new_aa) > len(cleaned_tokens):
+            extras = [aa + "*" for aa in new_aa[len(cleaned_tokens):]]
+            differences.extend(extras)
+
+        return differences
+    
+    def build_new_vial_map(self, new_aa):
+        '''Takes in new amino acids with * marking changes, recalculates occurrence,
+        then generates new vial plan with only the changed amino acids appended to the end.
+        '''
+
+        old_vial_path = os.path.join(os.path.dirname(__file__), "vial plan.csv")
+        if not os.path.exists(old_vial_path):
+            raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
+
+        df_old = pd.read_csv(old_vial_path)
+
+        # Find last rack and position
+        last_row = df_old.loc[df_old['Rack'].idxmax()]
+        last_rack = last_row['Rack']
+        last_position = df_old[df_old['Rack'] == last_rack]['Position'].max()
+
+        # Compute starting rack and position
+        if last_position >= 27:
+            start_rack = last_rack + 1
+            start_position = 1
         else:
-            # If no difference was found in common range
-            i = min(len(cleaned_tokens), len(new_aa))
+            start_rack = last_rack
+            start_position = last_position + 1
 
-        # Returns old vial data, differing amino acids
-        return new_aa[i:]
-    
-    #### Change code to take the returned AAs to I* so that when the sequence is re-run through the 
-    #### vial map, it appends it to the end of the vial map. Upon amend make sure code removes the * from
-    #### the amino acid so the vial map appends it to the end.
-    
-   # def build_new_vial_map(self, new_aa):
-    #    '''Takes in the new amino acids, recalculates occurrence, then generates new vial plan
-     #   with new amino acids appended to the end of the vial map'''
-#
- #       old_vial_path = os.path.join(os.path.dirname(__file__), "vial plan.csv")
-  #      if not os.path.exists(old_vial_path):
-   #         raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
-#
- #       df_old = pd.read_csv(old_vial_path)
-#
- #       # Find last rack and position
-  #      last_row = df_old.loc[df_old['Rack'].idxmax()]
-   #     last_rack = last_row['Rack']
-    #    last_position = df_old[df_old['Rack'] == last_rack]['Position'].max()
-#
- #       # Compute starting rack and position
-  #      if last_position >= 27:
-   #         start_rack = last_rack + 1
-    #        start_position = 1
-     #   else:
-      #      start_rack = last_rack
-       #     start_position = last_position + 1
+        # Filter only changed amino acids (those ending with '*')
+        changed_aa = [aa.rstrip("*") for aa in new_aa if aa.endswith("*")]
+
+        # If there are no new amino acids to add, return the original
+        if not changed_aa:
+            return df_old
 
         # Generate new vial plan
-       # df_new, _ = self.builder.vial_rack_positions(
-       #     tokens=new_aa,
-       #     start_rack=start_rack,
-       #     start_position=start_position
-       # )
+        df_new, _ = self.builder.vial_rack_positions(
+            tokens=changed_aa,
+            start_rack=start_rack,
+            start_position=start_position
+        )
 
         # Append and return combined vial map
-        #df_combined = pd.concat([df_old, df_new], ignore_index=True)
-        #return df_combined
+        df_combined = pd.concat([df_old, df_new], ignore_index=True)
+        return df_combined
 
-   # def build_new_synthesis_plan(self, df_combined, max_deprotection_volume=16):
-   #     """
-    #    Rebuild the full synthesis plan using a combined vial map (old + new).
-     #   Assumes self.tokens contains the full AA sequence.
-     #   """
-    #    # Call vial map to replan synthesis
-     #   vial_map = {}
-      #  for _, row in df_combined.iterrows():
-      #      name = row["Amino Acid"]
-      #      rack = int(row["Rack"])
-      #      position = int(row["Position"])
-       #     occurrences = int(row["Occurrences"])
-      #      vial_map[name] = (rack, position, occurrences)
 
-        # Call synthesis plan and then call the dataframe
-        #new_synth = self.builder.build_synthesis_plan(vial_map, max_deprotection_volume=max_deprotection_volume)
+    def build_new_vial_map(self, new_aa):
+        '''Takes in new amino acids with * marking changes, recalculates occurrence,
+        then generates new vial plan with only the changed amino acids appended to the end.
+        '''
 
-        #return pd.DataFrame(new_synth)
+        old_vial_path = os.path.join(os.path.dirname(__file__), "vial plan.csv")
+        if not os.path.exists(old_vial_path):
+            raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
 
-#### Fix the commented out code with the new vial naming method so that the correct appends to the csv
+        df_old = pd.read_csv(old_vial_path)
+
+        # Find last rack and position
+        last_row = df_old.loc[df_old['Rack'].idxmax()]
+        last_rack = last_row['Rack']
+        last_position = df_old[df_old['Rack'] == last_rack]['Position'].max()
+
+        # Compute starting rack and position
+        if last_position >= 27:
+            start_rack = last_rack + 1
+            start_position = 1
+        else:
+            start_rack = last_rack
+            start_position = last_position + 1
+
+        # Filter only changed amino acids (those ending with '*')
+        changed_aa = [aa.rstrip("*") for aa in new_aa if aa.endswith("*")]
+
+        # If there are no new amino acids to add, return the original
+        if not changed_aa:
+            return df_old
+
+        # FIXED: Calculate ADDITIONAL occurrences needed for changed amino acids
+        # Strip '*' from the full sequence to get clean amino acid names
+        full_new_sequence = [aa.rstrip("*") for aa in new_aa]
+        
+        # Get the old sequence (extracted earlier)
+        old_sequence = self.extract_old_sequence_from_csv()
+        
+        # Count occurrences in both sequences
+        old_counts = Counter(old_sequence)
+        new_counts = Counter(full_new_sequence)
+        
+        # Calculate ADDITIONAL occurrences needed for each changed amino acid
+        additional_aa_needed = []
+        for aa in changed_aa:
+            old_count = old_counts.get(aa, 0)
+            new_count = new_counts.get(aa, 0)
+            additional_needed = new_count - old_count
+            
+            print(f"DEBUG: {aa} - Old count: {old_count}, New count: {new_count}, Additional needed: {additional_needed}")
+            
+            if additional_needed > 0:
+                additional_aa_needed.extend([aa] * additional_needed)
+
+        print(f"DEBUG: Changed amino acids: {changed_aa}")
+        print(f"DEBUG: Additional amino acids needed: {additional_aa_needed}")
+
+        # If there are no additional amino acids needed, return the original
+        if not additional_aa_needed:
+            return df_old
+
+        # Generate new vial plan with correct ADDITIONAL occurrences
+        df_new, _ = self.builder.vial_rack_positions(
+            tokens=additional_aa_needed,
+            start_rack=start_rack,
+            start_position=start_position
+        )
+
+        # Append and return combined vial map
+        df_combined = pd.concat([df_old, df_new], ignore_index=True)
+        return df_combined

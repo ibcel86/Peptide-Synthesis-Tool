@@ -294,8 +294,8 @@ class CompareSequences():
 
         # If new_aa is longer than cleaned_tokens, mark the extras too
         if len(new_aa) > len(cleaned_tokens):
-            modifications = [aa + "*" for aa in new_aa[len(cleaned_tokens):]]
-            differences.extend(modifications)
+            add_aa = [aa + "*" for aa in new_aa[len(cleaned_tokens):]]
+            differences.extend(add_aa)
 
         return differences
     

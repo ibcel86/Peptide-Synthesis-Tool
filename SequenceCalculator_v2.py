@@ -292,15 +292,46 @@ class CompareSequences():
             if old != new:
                 differences.append(new + "*")
 
-        # If new_aa is longer than cleaned_tokens, mark the extras too
+        # If new_aa is longer than cleaned_tokens, marks additional amino acids
         if len(new_aa) > len(cleaned_tokens):
             add_aa = [aa + "*" for aa in new_aa[len(cleaned_tokens):]]
             differences.extend(add_aa)
 
         return differences
     
-    def build_new_vial_map(self):
-        pass
+    def build_new_vial_map(self, new_aa):
+        '''Takes in new amino acids with * marking changes, recalculates occurrence,
+        then generates new vial plan with only the changed amino acids appended to the end.
+        '''
+
+        old_vial_path = os.path.join(os.path.dirname(__file__), "vial plan.csv")
+        if not os.path.exists(old_vial_path):
+            raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
+
+        df_old = pd.read_csv(old_vial_path)
+
+        # Find last rack and position
+        last_row = df_old.loc[df_old['Rack'].idxmax()]
+        last_rack = last_row['Rack']
+        last_position = df_old[df_old['Rack'] == last_rack]['Position'].max()
+
+        # Compute starting rack and position
+        if last_position >= 27:
+            start_rack = last_rack + 1
+            start_position = 1
+        else:
+            start_rack = last_rack
+            start_position = last_position + 1
+
+        # Generate new vial plan
+        df_new, _ = self.builder.vial_rack_positions(
+            start_rack=start_rack,
+            start_position=start_position
+        )
+
+        # Append and return combined vial map
+        df_combined = pd.concat([df_old, df_new], ignore_index=True)
+        return df_combined
 
     def build_new_synthesis_plan():
         pass

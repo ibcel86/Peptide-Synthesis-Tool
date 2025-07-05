@@ -106,12 +106,10 @@ class TabView(customtkinter.CTkTabview):
             comparison = CompareSequences(builder_instance)
 
             old_sequence = comparison.extract_old_sequence_from_csv()
-            print(f"DEBUG: Old sequence extracted: {old_sequence}")
-            print(f"DEBUG: New sequence (self.tokens): {self.tokens}")
             new_only = comparison.compare_sequences(old_sequence, self.tokens)
             df_combined = comparison.build_new_vial_map(new_only)
             comparison.tokens = self.tokens
-            #new_synthesis_plan = comparison.build_new_synthesis_plan(df_combined)
+            new_synthesis_plan = comparison.build_new_synthesis_plan(df_combined)
 
             # Get the correct output path
             output_path = LoadFile.resource_path("")

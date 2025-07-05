@@ -299,48 +299,9 @@ class CompareSequences():
 
         return differences
     
-    def build_new_vial_map(self, new_aa):
-        '''Takes in new amino acids with * marking changes, recalculates occurrence,
-        then generates new vial plan with only the changed amino acids appended to the end.
-        '''
+    def build_new_vial_map(self):
+        pass
 
-        old_vial_path = os.path.join(os.path.dirname(__file__), "vial plan.csv")
-        if not os.path.exists(old_vial_path):
-            raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
-
-        df_old = pd.read_csv(old_vial_path)
-
-        # Find last rack and position
-        last_row = df_old.loc[df_old['Rack'].idxmax()]
-        last_rack = last_row['Rack']
-        last_position = df_old[df_old['Rack'] == last_rack]['Position'].max()
-
-        # Compute starting rack and position
-        if last_position >= 27:
-            start_rack = last_rack + 1
-            start_position = 1
-        else:
-            start_rack = last_rack
-            start_position = last_position + 1
-
-        # Filter only changed amino acids (those ending with '*')
-        changed_aa = [aa.rstrip("*") for aa in new_aa if aa.endswith("*")]
-
-        # If there are no new amino acids to add, return the original
-        if not changed_aa:
-            return df_old
-
-        # Generate new vial plan
-        df_new, _ = self.builder.vial_rack_positions(
-            tokens=changed_aa,
-            start_rack=start_rack,
-            start_position=start_position
-        )
-
-        # Append and return combined vial map
-        df_combined = pd.concat([df_old, df_new, aa.rstrip("*") for aa in new_aa if aa.endswith("*")], ignore_index=True)
-        return df_combined
-    
     def build_new_synthesis_plan():
         pass
 

@@ -111,7 +111,7 @@ class TabView(customtkinter.CTkTabview):
             new_only = comparison.compare_sequences(old_sequence, self.tokens)
             df_combined = comparison.build_new_vial_map(new_only)
             comparison.tokens = self.tokens
-            new_synthesis_plan = comparison.build_new_synthesis_plan(df_combined)
+            #new_synthesis_plan = comparison.build_new_synthesis_plan(df_combined)
 
             # Get the correct output path
             output_path = LoadFile.resource_path("")
@@ -121,7 +121,7 @@ class TabView(customtkinter.CTkTabview):
             synthesis_plan_path = LoadFile.resource_path("new synthesis plan.csv")
             
             df_combined.to_csv(vial_plan_path, index=False)
-            new_synthesis_plan.to_csv(synthesis_plan_path, index=False)
+            #new_synthesis_plan.to_csv(synthesis_plan_path, index=False)
 
             # Output success message
             self.output_text.delete("1.0", "end")

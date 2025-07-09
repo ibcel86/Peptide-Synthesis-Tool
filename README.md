@@ -86,4 +86,19 @@ Version 2 introduces significant upgrades:
 This project is currently complete! Updates will include bug fixes.
 
 ---
+## Installation
 
+If you want to create a working .exe, follow these instructions:
+
+1. Place main.py and sequence_calculator.py (or the relevant updated files) into the same directory.
+2. Open your terminal or command prompt and navigate to that direction:
+    cd path_to_your_directory
+3. Make sure you have python installed and added to your system PATH
+4. Install pyinstaller if you havent already:
+    pip install pyinstaller in your command prompt or terminal
+5. Run pyinstaller on main.py script to generate the .exe:
+    pyinstaller --onefile main.py
+    The --onefile option bundles everything into a single .exe file
+6. After pyinstaller finishes, find the .exe in the dist folder inside your directory
+7. Download amino_acids.csv and keep it in the same direcotry as the .exe file. Not doing so will result in an error
+    The amino_acid.csv can be edited to add further amino acids 

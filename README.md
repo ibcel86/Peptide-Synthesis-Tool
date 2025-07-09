@@ -16,6 +16,7 @@ The **Sequence Calculator** is a simple but powerful tool that allows scientists
   - Vial sampling order
 - Supports custom amino acids via a user-editable `amino_acid.csv` file
 - Exports machine-readable synthesis plans and vial maps
+- Compares sequences to generate new synthesis plan based on previous data
 
 ---
 

@@ -283,25 +283,26 @@ class CompareSequences():
         Example:
         old = [T, T, Pra, C, Q, L, I, E]
         new = [T, T, Pra, C, I, L, I, K]
-        --> returns ['I*', 'K*']
+        --> returns ['I', 'K']
         """
 
         differences = []
 
         for old, new in zip(cleaned_tokens, new_aa):
             if old != new:
-                differences.append(new + "*")
+                differences.append(new)
 
         # If new_aa is longer than cleaned_tokens, marks additional amino acids
         if len(new_aa) > len(cleaned_tokens):
-            add_aa = [aa + "*" for aa in new_aa[len(cleaned_tokens):]]
+            add_aa = [aa for aa in new_aa[len(cleaned_tokens):]]
             differences.extend(add_aa)
 
         return differences
     
     def build_new_vial_map(self, new_aa):
-        '''Takes in new amino acids with * marking changes, recalculates occurrence,
-        then generates new vial plan with only the changed amino acids appended to the end.
+        '''
+        Builds new vial entries for modified amino acids only (those marked with *).
+        Then combines them with the old vial map for synthesis plan generation.
         '''
 
         old_vial_path = os.path.join(os.path.dirname(__file__), "vial plan.csv")
@@ -323,17 +324,82 @@ class CompareSequences():
             start_rack = last_rack
             start_position = last_position + 1
 
-        # Generate new vial plan
-        df_new, _ = self.builder.vial_rack_positions(
-            start_rack=start_rack,
-            start_position=start_position
-        )
+        # Get a mapping of existing amino acid base names to their highest index
+        pattern = re.compile(r"^([A-Za-z]+)(\d+)?$")
+        aa_max_index = {}
 
-        # Append and return combined vial map
+        for name in df_old["Amino Acid"]:
+            match = pattern.match(name)
+            if match:
+                base = match.group(1)
+                idx = int(match.group(2)) if match.group(2) else 1
+                aa_max_index[base] = max(aa_max_index.get(base, 0), idx)
+
+        # Prepare cleaned list
+        cleaned_new_aa = [aa.replace("*", "") for aa in new_aa]
+
+        # Count how many times each new AA occurs
+        from collections import Counter
+        new_occurrences = Counter(cleaned_new_aa)
+
+        output = []
+        rack = start_rack
+        position = start_position
+        max_per_vial = 6
+        max_positions = 27
+
+        for aa in cleaned_new_aa:
+            if new_occurrences[aa] == 0:
+                continue  # already processed
+
+            total_count = new_occurrences[aa]
+            new_occurrences[aa] = 0  # mark as handled
+            splits = []
+
+            while total_count > 0:
+                chunk = min(total_count, max_per_vial)
+                splits.append(chunk)
+                total_count -= chunk
+
+            start_index = aa_max_index.get(aa, 0)
+
+            for i, split_count in enumerate(splits):
+                suffix = "" if start_index == 0 and i == 0 else str(start_index + i + 1)
+                name = aa + suffix
+                mmol = split_count * (16 * 0.4) / 6
+                mass = mmol * self.data.mw_dict[aa] / 1000
+                volume = split_count * 2.5
+
+                output.append({
+                    "Amino Acid": name,
+                    "Rack": rack,
+                    "Position": position,
+                    "Occurrences": split_count,
+                    "mmol": round(mmol, 2),
+                    "Mass (g)": round(mass, 2),
+                    "Volume (mL)": round(volume, 2)
+                })
+
+                position += 1
+                if position > max_positions:
+                    rack += 1
+                    position = 1
+
+        df_new = pd.DataFrame(output)
+
+        # Combine with old
         df_combined = pd.concat([df_old, df_new], ignore_index=True)
         return df_combined
 
-    def build_new_synthesis_plan():
-        pass
+    
+    def build_new_synthesis_plan(self, df_combined):
+        vial_map = {
+            row["Amino Acid"]: (row["Rack"], row["Position"], row["Occurrences"])
+            for _, row in df_combined.iterrows()
+        }
+
+        builder = BuildSynthesisPlan(self.tokens, self.original_tokens)
+        df_synthesis_plan = builder.build_synthesis_plan(vial_map)
+        return df_synthesis_plan
 
 

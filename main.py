@@ -119,7 +119,7 @@ class TabView(customtkinter.CTkTabview):
             synthesis_plan_path = LoadFile.resource_path("new synthesis plan.csv")
             
             df_combined.to_csv(vial_plan_path, index=False)
-            #new_synthesis_plan.to_csv(synthesis_plan_path, index=False)
+            new_synthesis_plan.to_csv(synthesis_plan_path, index=False)
 
             # Output success message
             self.output_text.delete("1.0", "end")

@@ -73,22 +73,17 @@ Version 2 introduces significant upgrades:
 
 - **Output Format**: CSV output now adheres to the format required by legacy synthesis machines
 - **Compatibility Mode**: Output was reverse-engineered based on exported experiments from the equipment itself
-- **Sequence Comparison Tool** *(in development)*:
+- **Sequence Comparison Tool** 
   - Allows uploading of a previously synthesised sequence
   - Identifies new or changed amino acids
   - Appends new vial positions to the end of existing racks
   - Automates what was previously a manual (and time-consuming) task
 
-> **Note:** This feature is still in **alpha**, and the code is currently available on the [`dev`](https://github.com/ibcel86/Sequence-Calculator/tree/version2_dev) branch.
-
 ---
 
 ## Development Status
 
-This project is actively evolving. Version 1 is stable and usable, while Version 2 features (CSV output and sequence comparison) are still undergoing testing.
+This project is currently complete! Updates will include bug fixes.
 
 ---
 
-## Contributions & Feedback
-
-This is a solo portfolio project built to solve a real-world lab workflow problem for a legacy piece of equipment. Feedback, suggestions, and pull requests are welcome!

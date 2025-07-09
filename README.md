@@ -67,7 +67,7 @@ TTVQIPraPRA          ❌
 
 ---
 
-## Version 2: Improved Output + Sequence Comparison (WIP)
+## Version 2: Improved Output + Sequence Comparison
 
 Version 2 introduces significant upgrades:
 

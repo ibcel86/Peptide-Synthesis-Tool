@@ -97,8 +97,9 @@ If you want to create a working .exe, follow these instructions:
 4. Install pyinstaller if you havent already:
     pip install pyinstaller in your command prompt or terminal
 5. Run pyinstaller on main.py script to generate the .exe:
+
     pyinstaller --onefile main.py
     The --onefile option bundles everything into a single .exe file
+   
 6. After pyinstaller finishes, find the .exe in the dist folder inside your directory
-7. Download amino_acids.csv and keep it in the same direcotry as the .exe file. Not doing so will result in an error
-    The amino_acid.csv can be edited to add further amino acids 
+7. Download amino_acids.csv and keep it in the same direcotry as the .exe file. Not doing so will result in an error. The amino_acid.csv can be edited to add further amino acids 

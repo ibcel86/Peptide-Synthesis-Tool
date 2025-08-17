@@ -244,72 +244,54 @@ class BuildSynthesisPlan():
         df_synthesis_plan = pd.DataFrame(synthesis_rows)
         return df_synthesis_plan
 
-class CompareSequences():
+class CompareSequences:
     '''Class loads old csv files so scientists can change the peptide sequence, eg: if they substitute
     amino acids, this class runs logic to compare the sequences, finds the different amino acids (eg Pra in place of K)
     and appends the new vial to the end of the rack. The synthesis plan is also modified and saved as a new csv file along
     with the vial map.'''
 
-    def __init__(self, builder_instance):
-        self.data = DataLoader()
+    def __init__(self, builder_instance, old_synthesis_path, old_vial_path):
+        self.builder = builder_instance
+        self.old_synthesis_path = old_synthesis_path
+        self.old_vial_path = old_vial_path
         self.tokens = None
         self.original_tokens = None
-        self.builder = builder_instance
+        self.data = DataLoader()  # make sure this exists
 
     def extract_old_sequence_from_csv(self):
-        '''Loads the old sequence by extracting it from the synthesis plan csv'''
-        old_sequence = os.path.join(os.path.dirname(__file__), "synthesis plan.csv")
-        if not os.path.exists(old_sequence):
+        """Loads old sequence from user-selected synthesis plan CSV."""
+        if not os.path.exists(self.old_synthesis_path):
             raise FileNotFoundError("Synthesis plan not found, please ensure the file is accessible.")
-        
-        df = pd.read_csv(old_sequence)
 
-        # Filter out only the rows that are amino acid additions only
+        df = pd.read_csv(self.old_synthesis_path)
+        df.columns = df.columns.str.strip()  # remove whitespace from headers
+
         aa_rows = df[~df['NAME'].str.contains('deprotection', case=False, na=False)]
-
-        # Extract the amino acid base names from the 'NAME' column by removing trailing digits
-        cleaned_tokens = [
-            re.sub(r'\d+$', '', name.strip())
-            for name in aa_rows['NAME']
-        ]
-
-        # Return the original sequence by reversing the extracted sequence from the csv file
+        cleaned_tokens = [re.sub(r'\d+$', '', name.strip()) for name in aa_rows['NAME']]
         self.original_tokens = cleaned_tokens[::-1]
         return cleaned_tokens
 
     def compare_sequences(self, cleaned_tokens, new_aa):
-        """Returns the amino acids in the new sequence that differ from the original.
-        Each differing amino acid is marked with '*'.
-        Example:
-        old = [T, T, Pra, C, Q, L, I, E]
-        new = [T, T, Pra, C, I, L, I, K]
-        --> returns ['I', 'K']
-        """
-
+        """Returns amino acids in new sequence that differ from old sequence."""
         differences = []
 
         for old, new in zip(cleaned_tokens, new_aa):
             if old != new:
                 differences.append(new)
 
-        # If new_aa is longer than cleaned_tokens, marks additional amino acids
+        # If new_aa is longer than cleaned_tokens, add the extra amino acids
         if len(new_aa) > len(cleaned_tokens):
-            add_aa = [aa for aa in new_aa[len(cleaned_tokens):]]
-            differences.extend(add_aa)
+            differences.extend(new_aa[len(cleaned_tokens):])
 
         return differences
-    
-    def build_new_vial_map(self, new_aa):
-        '''
-        Builds new vial entries for modified amino acids only (those marked with *).
-        Then combines them with the old vial map for synthesis plan generation.
-        '''
 
-        old_vial_path = os.path.join(os.path.dirname(__file__), "vial plan.csv")
-        if not os.path.exists(old_vial_path):
+    def build_new_vial_map(self, new_aa):
+        """Builds updated vial map using user-selected old vial map CSV."""
+        if not os.path.exists(self.old_vial_path):
             raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
 
-        df_old = pd.read_csv(old_vial_path)
+        df_old = pd.read_csv(self.old_vial_path)
+        df_old.columns = df_old.columns.str.strip()
 
         # Find last rack and position
         last_row = df_old.loc[df_old['Rack'].idxmax()]
@@ -317,17 +299,18 @@ class CompareSequences():
         last_position = df_old[df_old['Rack'] == last_rack]['Position'].max()
 
         # Compute starting rack and position
-        if last_position >= 27:
+        max_positions = 27
+        max_per_vial = 6
+        if last_position >= max_positions:
             start_rack = last_rack + 1
             start_position = 1
         else:
             start_rack = last_rack
             start_position = last_position + 1
 
-        # Get a mapping of existing amino acid base names to their highest index
+        # Map existing amino acids to highest index
         pattern = re.compile(r"^([A-Za-z]+)(\d+)?$")
         aa_max_index = {}
-
         for name in df_old["Amino Acid"]:
             match = pattern.match(name)
             if match:
@@ -335,27 +318,20 @@ class CompareSequences():
                 idx = int(match.group(2)) if match.group(2) else 1
                 aa_max_index[base] = max(aa_max_index.get(base, 0), idx)
 
-        # Prepare cleaned list
         cleaned_new_aa = [aa.replace("*", "") for aa in new_aa]
-
-        # Count how many times each new AA occurs
-        from collections import Counter
         new_occurrences = Counter(cleaned_new_aa)
 
         output = []
         rack = start_rack
         position = start_position
-        max_per_vial = 6
-        max_positions = 27
 
         for aa in cleaned_new_aa:
             if new_occurrences[aa] == 0:
-                continue  # already processed
+                continue
 
             total_count = new_occurrences[aa]
-            new_occurrences[aa] = 0  # mark as handled
+            new_occurrences[aa] = 0
             splits = []
-
             while total_count > 0:
                 chunk = min(total_count, max_per_vial)
                 splits.append(chunk)
@@ -386,20 +362,15 @@ class CompareSequences():
                     position = 1
 
         df_new = pd.DataFrame(output)
-
-        # Combine with old
         df_combined = pd.concat([df_old, df_new], ignore_index=True)
         return df_combined
 
-    
     def build_new_synthesis_plan(self, df_combined):
         vial_map = {
             row["Amino Acid"]: (row["Rack"], row["Position"], row["Occurrences"])
             for _, row in df_combined.iterrows()
         }
-
         builder = BuildSynthesisPlan(self.tokens, self.original_tokens)
         df_synthesis_plan = builder.build_synthesis_plan(vial_map)
         return df_synthesis_plan
-
 

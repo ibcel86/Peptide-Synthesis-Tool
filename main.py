@@ -104,37 +104,60 @@ class TabView(ctk.CTkTabview):
     def process_compared_sequences(self):
         '''Executes functions to compare sequences and output modified vial map and synthesis plan'''
         try:
+            # Get user input
             new_sequence = self.entry_modify.get()
 
-            # Early validation checks
+            # Early validation
             if ' ' not in new_sequence:
                 CTkMessagebox(title="Error", message="Check peptide sequence has spaces between letters", icon="cancel")
                 return
-                
+
+            # Validate sequence
             calc = CalculatePeptide()
             self.tokens, calc.original_tokens, invalid_amino_acids = calc.validate_user_sequence(new_sequence)
-            
+
             if not self.tokens:
                 CTkMessagebox(title="Error", message="No sequence loaded. Run validate_user_sequence() first.", icon="cancel")
                 return
-                
+
             if invalid_amino_acids:
-                CTkMessagebox(title="Error", message=f"Invalid amino acid(s): {', '.join(invalid_amino_acids)} Check sequence is correct and entered as per the example", icon="cancel")
+                CTkMessagebox(
+                    title="Error",
+                    message=f"Invalid amino acid(s): {', '.join(invalid_amino_acids)}. Check sequence is correct.",
+                    icon="cancel"
+                )
                 return
-                
+
             validated_sequence_mass = calc.calculate_sequence_mass(new_sequence)
 
+            # Build synthesis plan instance
             builder_instance = BuildSynthesisPlan(self.tokens, calc.original_tokens)
-            comparison = CompareSequences(builder_instance)
 
+            # Ask user to select old synthesis plan CSV
+            old_synthesis_path = filedialog.askopenfilename(
+                title="Select Old Synthesis Plan CSV",
+                filetypes=(("CSV files", "*.csv"), ("All files", "*.*"))
+            )
+            if not old_synthesis_path:  # user canceled
+                return
+
+            # Ask user to select old vial plan CSV
+            old_vial_path = filedialog.askopenfilename(
+                title="Select Old Vial Plan CSV",
+                filetypes=(("CSV files", "*.csv"), ("All files", "*.*"))
+            )
+            if not old_vial_path:  # user canceled
+                return
+
+            # Compare sequences using user-selected files
+            comparison = CompareSequences(builder_instance, old_synthesis_path, old_vial_path)
             old_sequence = comparison.extract_old_sequence_from_csv()
             new_only = comparison.compare_sequences(old_sequence, self.tokens)
             df_combined = comparison.build_new_vial_map(new_only)
             comparison.tokens = self.tokens
             new_synthesis_plan = comparison.build_new_synthesis_plan(df_combined)
 
-            # Save files via dialogs
-            # Vial plan
+            # Save new vial plan CSV
             initial_path = LoadFile.resource_path("new vial plan.csv")
             vial_plan_path = filedialog.asksaveasfilename(
                 initialdir=os.path.dirname(initial_path),
@@ -146,7 +169,7 @@ class TabView(ctk.CTkTabview):
             if not vial_plan_path:
                 return
 
-            # Synthesis plan
+            # Save new synthesis plan CSV
             initial_path = LoadFile.resource_path("new synthesis plan.csv")
             synthesis_plan_path = filedialog.asksaveasfilename(
                 initialdir=os.path.dirname(initial_path),
@@ -158,7 +181,7 @@ class TabView(ctk.CTkTabview):
             if not synthesis_plan_path:
                 return
 
-            # Save CSVs
+            # Write CSVs
             df_combined.to_csv(vial_plan_path, index=False)
             new_synthesis_plan.to_csv(synthesis_plan_path, index=False)
 

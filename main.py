@@ -1,8 +1,10 @@
-import customtkinter
+import customtkinter as ctk
+from customtkinter import filedialog
 from CTkMessagebox import CTkMessagebox
 from SequenceCalculator_v2 import CalculatePeptide, BuildSynthesisPlan, LoadFile, CompareSequences
+import os
 
-class TabView(customtkinter.CTkTabview):
+class TabView(ctk.CTkTabview):
     def __init__(self, master, output_text):
         super().__init__(master)
 
@@ -13,23 +15,23 @@ class TabView(customtkinter.CTkTabview):
         self.add("Modify Synthesis").grid_columnconfigure(0, weight=1)
         
         # Synthesis Planner Tab, Entry and Button
-        self.title_synthesisplanner = customtkinter.CTkLabel(self.tab("Synthesis Planner"), text="Synthesis Planner")
+        self.title_synthesisplanner = ctk.CTkLabel(self.tab("Synthesis Planner"), text="Synthesis Planner")
         self.title_synthesisplanner.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
 
-        self.entry = customtkinter.CTkEntry(self.tab("Synthesis Planner"), placeholder_text="Please enter your sequence eg T T Pra C: ")
+        self.entry = ctk.CTkEntry(self.tab("Synthesis Planner"), placeholder_text="Please enter your sequence eg T T Pra C: ")
         self.entry.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
         self.entry.bind("<Return>", lambda event: self.process_sequence())
-        self.submit_button = customtkinter.CTkButton(self.tab("Synthesis Planner"), text="Submit", command=self.process_sequence)
+        self.submit_button = ctk.CTkButton(self.tab("Synthesis Planner"), text="Submit", command=self.process_sequence)
         self.submit_button.grid(row=2, column=0, padx=10, pady=10)
 
         # Modify Synthesis Tab, Entry and Button
-        self.title_modifysynthesis = customtkinter.CTkLabel(self.tab("Modify Synthesis"), text="Modify Synthesis")
+        self.title_modifysynthesis = ctk.CTkLabel(self.tab("Modify Synthesis"), text="Modify Synthesis")
         self.title_modifysynthesis.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
 
-        self.entry_modify = customtkinter.CTkEntry(self.tab("Modify Synthesis"), placeholder_text="Please enter your modified sequence eg T T Pra C: ")
+        self.entry_modify = ctk.CTkEntry(self.tab("Modify Synthesis"), placeholder_text="Please enter your modified sequence eg T T Pra C: ")
         self.entry_modify.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
         self.entry_modify.bind("<Return>", lambda event: self.process_compared_sequences())
-        self.submit_button_modify = customtkinter.CTkButton(self.tab("Modify Synthesis"), text="Submit", command=self.process_compared_sequences)
+        self.submit_button_modify = ctk.CTkButton(self.tab("Modify Synthesis"), text="Submit", command=self.process_compared_sequences)
         self.submit_button_modify.grid(row=2, column=0, padx=10, pady=10)
 
     def process_sequence(self):
@@ -61,8 +63,28 @@ class TabView(customtkinter.CTkTabview):
 
             # Get the correct output path and save files with full path
             output_path = LoadFile.resource_path("")
-            vial_plan_path = LoadFile.resource_path("vial plan.csv")
-            synthesis_plan_path = LoadFile.resource_path("synthesis plan.csv")
+            initial_path = LoadFile.resource_path("vial plan.csv")  # gives full path to default file
+            vial_plan_path = filedialog.asksaveasfilename(
+            initialdir = os.path.dirname(initial_path),  # start in folder of the default file
+            initialfile = os.path.basename(initial_path),  # default filename
+            title="Save Vial Plan CSV",
+            defaultextension=".csv",
+            filetypes=(("CSV files", "*.csv"), ("All files", "*.*")))
+
+            if not vial_plan_path:
+                return
+            
+            initial_path = LoadFile.resource_path("synthesis plan.csv")  # gives full path to default file
+            synthesis_plan_path = filedialog.asksaveasfilename(
+                initialdir=os.path.dirname(initial_path),  # start in folder of the default file
+                initialfile=os.path.basename(initial_path),  # default filename
+                title="Save Synthesis Plan CSV",
+                defaultextension=".csv",
+                filetypes=(("CSV files", "*.csv"), ("All files", "*.*"))
+            )
+
+            if not synthesis_plan_path:  # user canceled
+                return
             
             df_vial_plan.to_csv(vial_plan_path, index=False)
             df_synth_plan.to_csv(synthesis_plan_path, index=False)
@@ -111,13 +133,32 @@ class TabView(customtkinter.CTkTabview):
             comparison.tokens = self.tokens
             new_synthesis_plan = comparison.build_new_synthesis_plan(df_combined)
 
-            # Get the correct output path
-            output_path = LoadFile.resource_path("")
-            
-            # Save files with full path
-            vial_plan_path = LoadFile.resource_path("new vial plan.csv")
-            synthesis_plan_path = LoadFile.resource_path("new synthesis plan.csv")
-            
+            # Save files via dialogs
+            # Vial plan
+            initial_path = LoadFile.resource_path("new vial plan.csv")
+            vial_plan_path = filedialog.asksaveasfilename(
+                initialdir=os.path.dirname(initial_path),
+                initialfile=os.path.basename(initial_path),
+                title="Save New Vial Plan CSV",
+                defaultextension=".csv",
+                filetypes=(("CSV files", "*.csv"), ("All files", "*.*"))
+            )
+            if not vial_plan_path:
+                return
+
+            # Synthesis plan
+            initial_path = LoadFile.resource_path("new synthesis plan.csv")
+            synthesis_plan_path = filedialog.asksaveasfilename(
+                initialdir=os.path.dirname(initial_path),
+                initialfile=os.path.basename(initial_path),
+                title="Save New Synthesis Plan CSV",
+                defaultextension=".csv",
+                filetypes=(("CSV files", "*.csv"), ("All files", "*.*"))
+            )
+            if not synthesis_plan_path:
+                return
+
+            # Save CSVs
             df_combined.to_csv(vial_plan_path, index=False)
             new_synthesis_plan.to_csv(synthesis_plan_path, index=False)
 
@@ -125,9 +166,9 @@ class TabView(customtkinter.CTkTabview):
             self.output_text.delete("1.0", "end")
             self.output_text.insert("end", f"Your peptide contains {len(self.tokens)} amino acids\n")
             self.output_text.insert("end", f"Your peptide has a mass of: {validated_sequence_mass:.2f} g/mol\n\n")
-            self.output_text.insert("end", f"Success! Your CSV files were saved in:\n{output_path}\n")
-            self.output_text.insert("end", f"Files created:\n- new vial plan.csv\n- new synthesis plan.csv")
-            
+            self.output_text.insert("end", f"Success! Your CSV files were saved:\n")
+            self.output_text.insert("end", f"- {vial_plan_path}\n- {synthesis_plan_path}")
+
         except FileNotFoundError as e:
             CTkMessagebox(title="Error", message=f"File not found: {str(e)}", icon="cancel")
         except ValueError as e:
@@ -135,18 +176,19 @@ class TabView(customtkinter.CTkTabview):
         except Exception as e:
             CTkMessagebox(title="Error", message=f"An unexpected error occurred: {str(e)}", icon="cancel")
 
-class App(customtkinter.CTk):
+
+class App(ctk.CTk):
     '''Activates the GUI etc'''
     def __init__(self):
         super().__init__()
 
         self.title("Peptide Sequence Tool")
-        customtkinter.set_appearance_mode("dark")
+        ctk.set_appearance_mode("dark")
         self.geometry("720x480")
         self.grid_columnconfigure(0, weight=4)
         self.grid_rowconfigure(1, weight=4)
 
-        self.output_text = customtkinter.CTkTextbox(self, height=100, width=600)
+        self.output_text = ctk.CTkTextbox(self, height=100, width=600)
         self.output_text.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
 
         self.tabview = TabView(self, self.output_text)

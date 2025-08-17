@@ -1,4 +1,5 @@
-import customtkinter
+import customtkinter as ctk
+from customtkinter import filedialog
 from CTkMessagebox import CTkMessagebox
 from SequenceCalculator_v2 import CalculatePeptide, BuildSynthesisPlan, LoadFile, CompareSequences
 
@@ -13,23 +14,23 @@ class TabView(customtkinter.CTkTabview):
         self.add("Modify Synthesis").grid_columnconfigure(0, weight=1)
         
         # Synthesis Planner Tab, Entry and Button
-        self.title_synthesisplanner = customtkinter.CTkLabel(self.tab("Synthesis Planner"), text="Synthesis Planner")
+        self.title_synthesisplanner = ctk.CTkLabel(self.tab("Synthesis Planner"), text="Synthesis Planner")
         self.title_synthesisplanner.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
 
-        self.entry = customtkinter.CTkEntry(self.tab("Synthesis Planner"), placeholder_text="Please enter your sequence eg T T Pra C: ")
+        self.entry = ctk.CTkEntry(self.tab("Synthesis Planner"), placeholder_text="Please enter your sequence eg T T Pra C: ")
         self.entry.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
         self.entry.bind("<Return>", lambda event: self.process_sequence())
-        self.submit_button = customtkinter.CTkButton(self.tab("Synthesis Planner"), text="Submit", command=self.process_sequence)
+        self.submit_button = ctk.CTkButton(self.tab("Synthesis Planner"), text="Submit", command=self.process_sequence)
         self.submit_button.grid(row=2, column=0, padx=10, pady=10)
 
         # Modify Synthesis Tab, Entry and Button
-        self.title_modifysynthesis = customtkinter.CTkLabel(self.tab("Modify Synthesis"), text="Modify Synthesis")
+        self.title_modifysynthesis = ctk.CTkLabel(self.tab("Modify Synthesis"), text="Modify Synthesis")
         self.title_modifysynthesis.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
 
-        self.entry_modify = customtkinter.CTkEntry(self.tab("Modify Synthesis"), placeholder_text="Please enter your modified sequence eg T T Pra C: ")
+        self.entry_modify = ctk.CTkEntry(self.tab("Modify Synthesis"), placeholder_text="Please enter your modified sequence eg T T Pra C: ")
         self.entry_modify.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
         self.entry_modify.bind("<Return>", lambda event: self.process_compared_sequences())
-        self.submit_button_modify = customtkinter.CTkButton(self.tab("Modify Synthesis"), text="Submit", command=self.process_compared_sequences)
+        self.submit_button_modify = ctk.CTkButton(self.tab("Modify Synthesis"), text="Submit", command=self.process_compared_sequences)
         self.submit_button_modify.grid(row=2, column=0, padx=10, pady=10)
 
     def process_sequence(self):
@@ -141,12 +142,12 @@ class App(customtkinter.CTk):
         super().__init__()
 
         self.title("Peptide Sequence Tool")
-        customtkinter.set_appearance_mode("dark")
+        ctk.set_appearance_mode("dark")
         self.geometry("720x480")
         self.grid_columnconfigure(0, weight=4)
         self.grid_rowconfigure(1, weight=4)
 
-        self.output_text = customtkinter.CTkTextbox(self, height=100, width=600)
+        self.output_text = ctk.CTkTextbox(self, height=100, width=600)
         self.output_text.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
 
         self.tabview = TabView(self, self.output_text)

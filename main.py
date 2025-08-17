@@ -136,7 +136,7 @@ class TabView(customtkinter.CTkTabview):
         except Exception as e:
             CTkMessagebox(title="Error", message=f"An unexpected error occurred: {str(e)}", icon="cancel")
 
-class App(customtkinter.CTk):
+class App(ctk.CTk):
     '''Activates the GUI etc'''
     def __init__(self):
         super().__init__()

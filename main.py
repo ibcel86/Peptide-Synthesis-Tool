@@ -135,18 +135,22 @@ class TabView(ctk.CTkTabview):
             builder_instance = BuildSynthesisPlan(self.tokens, calc.original_tokens)
 
             # Ask user to select old synthesis plan CSV
+            CTkMessagebox(title="Load Synthesis Plan", message="Load prior Synthesis Plan", icon="info")
             old_synthesis_path = filedialog.askopenfilename(
                 title="Select Old Synthesis Plan CSV",
                 filetypes=(("CSV files", "*.csv"), ("All files", "*.*"))
             )
+
             if not old_synthesis_path:  # user canceled
                 return
 
             # Ask user to select old vial plan CSV
+            CTkMessagebox(title="Load Vial Plan", message="Load prior Vial Plan", icon="info")
             old_vial_path = filedialog.askopenfilename(
                 title="Select Old Vial Plan CSV",
                 filetypes=(("CSV files", "*.csv"), ("All files", "*.*"))
             )
+
             if not old_vial_path:  # user canceled
                 return
 
@@ -159,6 +163,7 @@ class TabView(ctk.CTkTabview):
             new_synthesis_plan = comparison.build_new_synthesis_plan(df_combined)
 
             # Save new vial plan CSV
+            CTkMessagebox(title="Save File", message="Click OK to save vial plan", icon="info")
             initial_path = LoadFile.resource_path("new vial plan.csv")
             vial_plan_path = filedialog.asksaveasfilename(
                 initialdir=os.path.dirname(initial_path),
@@ -167,10 +172,12 @@ class TabView(ctk.CTkTabview):
                 defaultextension=".csv",
                 filetypes=(("CSV files", "*.csv"), ("All files", "*.*"))
             )
+
             if not vial_plan_path:
                 return
 
             # Save new synthesis plan CSV
+            CTkMessagebox(title="Save File", message="Click OK to save synthesis plan", icon="info")
             initial_path = LoadFile.resource_path("new synthesis plan.csv")
             synthesis_plan_path = filedialog.asksaveasfilename(
                 initialdir=os.path.dirname(initial_path),
@@ -179,6 +186,7 @@ class TabView(ctk.CTkTabview):
                 defaultextension=".csv",
                 filetypes=(("CSV files", "*.csv"), ("All files", "*.*"))
             )
+            
             if not synthesis_plan_path:
                 return
 

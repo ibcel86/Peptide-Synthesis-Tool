@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from customtkinter import filedialog
 from CTkMessagebox import CTkMessagebox
-from SequenceCalculator_v2 import CalculatePeptide, BuildSynthesisPlan, LoadFile, CompareSequences
+from SequenceCalculator_v3 import CalculatePeptide, BuildSynthesisPlan, LoadFile, CompareSequences
 import os
 
 class TabView(ctk.CTkTabview):
@@ -62,18 +62,20 @@ class TabView(ctk.CTkTabview):
             df_synth_plan = synthesis_plan.build_synthesis_plan(vial_map)
 
             # Get the correct output path and save files with full path
+            CTkMessagebox(title="Save File", message="Click OK to save vial plan", icon="info")
             output_path = LoadFile.resource_path("")
             initial_path = LoadFile.resource_path("vial plan.csv")  # gives full path to default file
             vial_plan_path = filedialog.asksaveasfilename(
-            initialdir = os.path.dirname(initial_path),  # start in folder of the default file
-            initialfile = os.path.basename(initial_path),  # default filename
-            title="Save Vial Plan CSV",
-            defaultextension=".csv",
-            filetypes=(("CSV files", "*.csv"), ("All files", "*.*")))
+                initialdir = os.path.dirname(initial_path),  # start in folder of the default file
+                initialfile = os.path.basename(initial_path),  # default filename
+                title="Save Vial Plan CSV",
+                defaultextension=".csv",
+                filetypes=(("CSV files", "*.csv"), ("All files", "*.*"))
+            )
 
             if not vial_plan_path:
                 return
-            
+            CTkMessagebox(title="Save File", message="Click OK to save synthesis plan", icon="info")
             initial_path = LoadFile.resource_path("synthesis plan.csv")  # gives full path to default file
             synthesis_plan_path = filedialog.asksaveasfilename(
                 initialdir=os.path.dirname(initial_path),  # start in folder of the default file
@@ -94,7 +96,6 @@ class TabView(ctk.CTkTabview):
             self.output_text.insert("end", f"Your peptide contains {len(self.tokens)} amino acids\n")
             self.output_text.insert("end", f"Your peptide has a mass of: {validated_sequence_mass:.2f} g/mol\n\n")
             self.output_text.insert("end", f"Success! Your CSV files were saved in:\n{output_path}\n")
-            self.output_text.insert("end", f"Files created:\n- vial plan.csv\n- synthesis plan.csv")
             
         except ValueError as e:
             CTkMessagebox(title="Error", message=str(e), icon="cancel")

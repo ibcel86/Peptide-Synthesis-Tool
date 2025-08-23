@@ -13,6 +13,7 @@ class TabView(ctk.CTkTabview):
         # Tabs
         self.add("Synthesis Planner").grid_columnconfigure(0, weight=1)
         self.add("Modify Synthesis").grid_columnconfigure(0, weight=1)
+        self.add("Add Amino Acid").grid_columnconfigure(0, weight=1)
         
         # Synthesis Planner Tab, Entry and Button
         self.title_synthesisplanner = ctk.CTkLabel(self.tab("Synthesis Planner"), text="Synthesis Planner")
@@ -33,6 +34,10 @@ class TabView(ctk.CTkTabview):
         self.entry_modify.bind("<Return>", lambda event: self.process_compared_sequences())
         self.submit_button_modify = ctk.CTkButton(self.tab("Modify Synthesis"), text="Submit", command=self.process_compared_sequences)
         self.submit_button_modify.grid(row=2, column=0, padx=10, pady=10)
+
+        #Add Amino Acid tab
+        self.title_add_amino_acid = ctk.CTkLabel(self.tab("Add Amino Acid"), text="Add amino acid")
+        self.title_add_amino_acid.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
 
     def process_sequence(self):
         '''Processes user input and outputs data with required outputs messages and error messages'''

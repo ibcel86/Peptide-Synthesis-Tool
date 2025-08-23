@@ -1,9 +1,0 @@
-NAME,FLOW RATE A (ml/min),FLOW RATE B (ml/min),FLOW RATE D (ml/min),RESIDENCE 2,AUTOSAMPLER SITE A,REAGENT CONC A (M),AUTOSAMPLER SITE B,REAGENT CONC B (M),DO NOT FILL,REAGENT USE (ml),REACTOR TEMPERATURE 2 (C),REACTOR TEMPERATURE 3 (C),WHOLE PEAK,DO NOT COLLECT,CLEANING FLOW RATE (ml/min),MANUAL CLEAN (ml)
-C1,0.889,0.444,0.0,True,1,0.1,28,0.24,False,4,75,75,False,True,2,4
-deprotection 1,0.0,0.0,0.8,True,1,0.1,28,0.1,False,4,75,75,False,True,2,4
-Pra2,0.889,0.444,0.0,True,2,0.1,28,0.24,False,4,75,75,False,True,2,4
-deprotection 2,0.0,0.0,0.8,True,2,0.1,28,0.1,False,4,75,75,False,True,2,4
-T3,0.889,0.444,0.0,True,3,0.1,28,0.24,False,4,75,75,False,True,2,4
-deprotection 3,0.0,0.0,0.8,True,3,0.1,28,0.1,False,4,75,75,False,True,2,4
-T4,0.889,0.444,0.0,True,3,0.1,28,0.24,False,4,75,75,False,True,2,4
-deprotection 4,0.0,0.0,0.8,True,3,0.1,28,0.1,False,4,75,75,False,True,2,4

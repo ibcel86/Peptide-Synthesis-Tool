@@ -34,16 +34,62 @@ class CalculatePeptide:
         self.data = DataLoader()
         self.tokens = None
         self.original_tokens = None 
+
+    def _tokenize_sequence(self, sequence):
+        """
+        Tokenize a sequence like 'TTPraCQ' into ['T','T','Pra','C','Q'] 
+        using known amino acids from self.data.valid_amino_acids.
+        """
+        valid_aas = sorted(self.data.valid_amino_acids, key=len, reverse=True)  
+        # sort longest → shortest, so "Pra" matches before "P"
+        
+        tokens = []
+        i = 0
+        while i < len(sequence):
+            match = None
+            for aa in valid_aas:
+                if sequence[i:].startswith(aa):
+                    match = aa
+                    tokens.append(match)
+                    i += len(match)
+                    break
+            if not match:  # nothing matched → unknown amino acid
+                tokens.append(sequence[i])  
+                i += 1
+        return tokens
     
     def validate_user_sequence(self, sequence):
-        '''Validates user sequence. Input gives example of how the user should input the sequence'''
-        
-        self.original_tokens = [aa.strip() for aa in sequence.split()]
-        # Reverses the sequence input so synthesis plan correctly shows the order of synthesis
-        self.tokens = self.original_tokens[::-1]
-        # Finds invalid amino acids: those that are not in the .csv file
-        invalid_amino_acids = [aa for aa in self.original_tokens if aa not in self.data.valid_amino_acids]
+        """Validates user sequence. Allows no spaces. Splits into amino acids based on dictionary."""
+
+        sequence = sequence.strip()
+
+        valid_aas = sorted(self.data.valid_amino_acids, key=len, reverse=True)
+        tokens = []
+        i = 0
+
+        while i < len(sequence):
+            match = None
+            for aa in valid_aas:
+                if sequence.startswith(aa, i):
+                    match = aa
+                    tokens.append(match)
+                    i += len(aa)
+                    break
+            if not match:
+                raise ValueError(
+                    f"Invalid amino acid at position {i+1}: '{sequence[i:]}'"
+                )
+
+        self.original_tokens = tokens
+        self.tokens = tokens[::-1]  # reverse for synthesis order
+
+        invalid_amino_acids = [
+            aa for aa in self.original_tokens if aa not in self.data.valid_amino_acids
+        ]
+
         return self.tokens, self.original_tokens, invalid_amino_acids
+
+
 
     def calculate_sequence_mass(self, sequence):
         """Calculate mass of the sequence using the loaded DataFrame"""

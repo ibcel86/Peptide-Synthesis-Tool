@@ -3,6 +3,7 @@ from customtkinter import filedialog
 from CTkMessagebox import CTkMessagebox
 from SequenceCalculator_v3 import CalculatePeptide, BuildSynthesisPlan, LoadFile, CompareSequences
 import os
+import pandas as pd
 
 class TabView(ctk.CTkTabview):
     def __init__(self, master, output_text):
@@ -19,7 +20,7 @@ class TabView(ctk.CTkTabview):
         self.title_synthesisplanner = ctk.CTkLabel(self.tab("Synthesis Planner"), text="Synthesis Planner")
         self.title_synthesisplanner.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
 
-        self.entry = ctk.CTkEntry(self.tab("Synthesis Planner"), placeholder_text="Please enter your sequence eg T T Pra C: ")
+        self.entry = ctk.CTkEntry(self.tab("Synthesis Planner"), placeholder_text="Please enter your sequence: ")
         self.entry.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
         self.entry.bind("<Return>", lambda event: self.process_sequence())
         self.submit_button = ctk.CTkButton(self.tab("Synthesis Planner"), text="Submit", command=self.process_sequence)
@@ -29,26 +30,47 @@ class TabView(ctk.CTkTabview):
         self.title_modifysynthesis = ctk.CTkLabel(self.tab("Modify Synthesis"), text="Modify Synthesis")
         self.title_modifysynthesis.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
 
-        self.entry_modify = ctk.CTkEntry(self.tab("Modify Synthesis"), placeholder_text="Please enter your modified sequence eg T T Pra C: ")
+        self.entry_modify = ctk.CTkEntry(self.tab("Modify Synthesis"), placeholder_text="Please enter your modified sequence: ")
         self.entry_modify.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
         self.entry_modify.bind("<Return>", lambda event: self.process_compared_sequences())
         self.submit_button_modify = ctk.CTkButton(self.tab("Modify Synthesis"), text="Submit", command=self.process_compared_sequences)
         self.submit_button_modify.grid(row=2, column=0, padx=10, pady=10)
 
-        #Add Amino Acid tab
-        self.title_add_amino_acid = ctk.CTkLabel(self.tab("Add Amino Acid"), text="Add amino acid")
+        # Add Amino Acid tab
+        self.title_add_amino_acid = ctk.CTkLabel(self.tab("Add Amino Acid"), text="Add Amino Acid")
         self.title_add_amino_acid.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
+
+        # Add Amino Acid form
+        self.aa_label = ctk.CTkLabel(self.tab("Add Amino Acid"), text="Amino Acid Code:")
+        self.aa_label.grid(row=1, column=0, padx=10, pady=(10, 5), sticky="w")
+        
+        self.entry_aa = ctk.CTkEntry(self.tab("Add Amino Acid"), placeholder_text="e.g., Pra")
+        self.entry_aa.grid(row=2, column=0, padx=10, pady=(0, 10), sticky="ew")
+
+        self.mw_label = ctk.CTkLabel(self.tab("Add Amino Acid"), text="Molecular Weight:")
+        self.mw_label.grid(row=3, column=0, padx=10, pady=(0, 5), sticky="w")
+        
+        self.entry_mw = ctk.CTkEntry(self.tab("Add Amino Acid"), placeholder_text="e.g., 335.35")
+        self.entry_mw.grid(row=4, column=0, padx=10, pady=(0, 10), sticky="ew")
+
+        self.name_label = ctk.CTkLabel(self.tab("Add Amino Acid"), text="Full Name:")
+        self.name_label.grid(row=5, column=0, padx=10, pady=(0, 5), sticky="w")
+        
+        self.entry_name = ctk.CTkEntry(self.tab("Add Amino Acid"), placeholder_text="e.g., Fmoc-Pra-OH; [0.40M]")
+        self.entry_name.grid(row=6, column=0, padx=10, pady=(0, 10), sticky="ew")
+
+        self.submit_button_add_aa = ctk.CTkButton(self.tab("Add Amino Acid"), text="Add Amino Acid", command=self.add_amino_acid)
+        self.submit_button_add_aa.grid(row=7, column=0, padx=10, pady=10)
+
+        # View current amino acids button
+        self.view_button_aa = ctk.CTkButton(self.tab("Add Amino Acid"), text="View Current Amino Acids", command=self.view_amino_acids)
+        self.view_button_aa.grid(row=8, column=0, padx=10, pady=10)
 
     def process_sequence(self):
         '''Processes user input and outputs data with required outputs messages and error messages'''
         try:
             sequence = self.entry.get()
-            
-            # Early validation checks
-            if ' ' not in sequence:
-                CTkMessagebox(title="Error", message="Check peptide sequence has spaces between letters", icon="cancel")
-                return
-                
+
             calc = CalculatePeptide()
             self.tokens, calc.original_tokens, invalid_amino_acids = calc.validate_user_sequence(sequence)
             
@@ -213,6 +235,123 @@ class TabView(ctk.CTkTabview):
         except Exception as e:
             CTkMessagebox(title="Error", message=f"An unexpected error occurred: {str(e)}", icon="cancel")
 
+    def add_amino_acid(self):
+        '''Adds a new amino acid to the CSV file'''
+        try:
+            # Get user input
+            aa_code = self.entry_aa.get().strip()
+            mw_text = self.entry_mw.get().strip()
+            full_name = self.entry_name.get().strip()
+
+            # Validate input
+            if not aa_code:
+                CTkMessagebox(title="Error", message="Please enter an amino acid code.", icon="cancel")
+                return
+
+            if not mw_text:
+                CTkMessagebox(title="Error", message="Please enter a molecular weight.", icon="cancel")
+                return
+
+            # Convert molecular weight to float
+            try:
+                mw = float(mw_text)
+            except ValueError:
+                CTkMessagebox(title="Error", message="Molecular weight must be a valid number.", icon="cancel")
+                return
+
+            # If no full name provided, create a default one
+            if not full_name:
+                full_name = f"Fmoc-{aa_code}-OH; [0.40M]"
+
+            # Get CSV file path
+            csv_path = LoadFile.get_csv_path()
+
+            # Check if CSV file exists
+            if not os.path.exists(csv_path):
+                CTkMessagebox(title="Error", message=f"CSV file not found: {csv_path}", icon="cancel")
+                return
+
+            # Load existing CSV
+            df = pd.read_csv(csv_path)
+
+            # Check if amino acid already exists
+            if aa_code in df['AA'].values:
+                result = CTkMessagebox(
+                    title="Amino Acid Exists", 
+                    message=f"Amino acid '{aa_code}' already exists. Do you want to update it?",
+                    icon="question",
+                    option_1="Yes",
+                    option_2="No"
+                )
+                if result.get() == "No":
+                    return
+                
+                # Update existing entry
+                df.loc[df['AA'] == aa_code, 'MW'] = mw
+                df.loc[df['AA'] == aa_code, 'Fmoc-Cys(Trt)-OH; [0.40M]'] = full_name
+                action = "updated"
+            else:
+                # Add new entry
+                new_row = {
+                    'AA': aa_code,
+                    'MW': mw,
+                    'Fmoc-Cys(Trt)-OH; [0.40M]': full_name
+                }
+                df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+                action = "added"
+
+            # Save updated CSV
+            df.to_csv(csv_path, index=False)
+
+            # Clear input fields
+            self.entry_aa.delete(0, 'end')
+            self.entry_mw.delete(0, 'end')
+            self.entry_name.delete(0, 'end')
+
+            # Show success message in output text
+            self.output_text.delete("1.0", "end")
+            self.output_text.insert("end", f"Success! Amino acid '{aa_code}' has been {action}.\n")
+            self.output_text.insert("end", f"Code: {aa_code}\n")
+            self.output_text.insert("end", f"Molecular Weight: {mw}\n")
+            self.output_text.insert("end", f"Full Name: {full_name}\n\n")
+            self.output_text.insert("end", f"CSV file updated: {csv_path}")
+
+            CTkMessagebox(title="Success", message=f"Amino acid '{aa_code}' has been {action} successfully!", icon="check")
+
+        except Exception as e:
+            CTkMessagebox(title="Error", message=f"An unexpected error occurred: {str(e)}", icon="cancel")
+
+    def view_amino_acids(self):
+        '''Displays all current amino acids in the output text'''
+        try:
+            csv_path = LoadFile.get_csv_path()
+            
+            if not os.path.exists(csv_path):
+                CTkMessagebox(title="Error", message=f"CSV file not found: {csv_path}", icon="cancel")
+                return
+
+            df = pd.read_csv(csv_path)
+            
+            # Clear output and display amino acids
+            self.output_text.delete("1.0", "end")
+            self.output_text.insert("end", "Current Amino Acids:\n")
+            self.output_text.insert("end", "=" * 50 + "\n\n")
+
+            for _, row in df.iterrows():
+                self.output_text.insert("end", f"Code: {row['AA']}\n")
+                self.output_text.insert("end", f"MW: {row['MW']}\n")
+                if len(df.columns) > 2:  # If there's a third column with full names
+                    full_name_col = df.columns[0]  # Get the third column name
+                    self.output_text.insert("end", f"Name: {row[full_name_col]}\n")
+                self.output_text.insert("end", "-" * 30 + "\n")
+
+            self.output_text.insert("end", f"\nTotal amino acids: {len(df)}")
+            self.output_text.update_idletasks()
+            self.output_text.see("end")
+
+        except Exception as e:
+            CTkMessagebox(title="Error", message=f"An error occurred while loading amino acids: {str(e)}", icon="cancel")
+
 
 class App(ctk.CTk):
     '''Activates the GUI etc'''
@@ -221,15 +360,17 @@ class App(ctk.CTk):
 
         self.title("Peptide Sequence Tool")
         ctk.set_appearance_mode("dark")
-        self.geometry("720x480")
+        self.geometry("1920x1080")
         self.grid_columnconfigure(0, weight=4)
         self.grid_rowconfigure(1, weight=4)
 
-        self.output_text = ctk.CTkTextbox(self, height=100, width=600)
+        self.output_text = ctk.CTkTextbox(self, height=960, width=600)
         self.output_text.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
 
         self.tabview = TabView(self, self.output_text)
         self.tabview.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+
+        
 
 if __name__ == "__main__":
     app = App()

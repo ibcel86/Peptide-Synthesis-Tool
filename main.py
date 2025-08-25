@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from customtkinter import filedialog
 from CTkMessagebox import CTkMessagebox
-from SequenceCalculator_v3 import CalculatePeptide, BuildSynthesisPlan, LoadFile, CompareSequences
+from peptidesequencetool import CalculatePeptide, BuildSynthesisPlan, LoadFile, CompareSequences
 import os
 import pandas as pd
 

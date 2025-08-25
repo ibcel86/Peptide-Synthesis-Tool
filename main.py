@@ -376,8 +376,6 @@ class App(ctk.CTk):
         self.tabview = TabView(self, self.output_text)
         self.tabview.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
-        
-
 if __name__ == "__main__":
     app = App()
     app.mainloop()

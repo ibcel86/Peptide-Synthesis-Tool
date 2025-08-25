@@ -42,11 +42,7 @@ For example, if the amino acid `T` appears **8 times**, the system will split it
 
 ## Amino Acid Format
 
-- **Single-letter codes** and **custom 3-letter codes** are both supported
-- To avoid ambiguity, sequences with 3-letter codes must include spaces:
-
-T T V Q I Pra P R A  ✅
-TTVQIPraPRA          ❌
+- **Single-letter codes** and **custom 3-letter codes** are both supported  
 
 ## ⚙Internal Logic (Function Overview)
 

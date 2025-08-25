@@ -354,17 +354,23 @@ class TabView(ctk.CTkTabview):
 
 
 class App(ctk.CTk):
-    '''Activates the GUI etc'''
     def __init__(self):
         super().__init__()
 
         self.title("Peptide Sequence Tool")
         ctk.set_appearance_mode("dark")
-        self.geometry("1920x1080")
+
+        # Get native screen resolution
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+
+        # Set window to full screen size
+        self.geometry(f"{screen_width}x{screen_height}")
+
         self.grid_columnconfigure(0, weight=4)
         self.grid_rowconfigure(1, weight=4)
 
-        self.output_text = ctk.CTkTextbox(self, height=960, width=600)
+        self.output_text = ctk.CTkTextbox(self, height=360, width=480)
         self.output_text.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
 
         self.tabview = TabView(self, self.output_text)

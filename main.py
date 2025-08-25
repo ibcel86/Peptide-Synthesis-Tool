@@ -236,122 +236,93 @@ class TabView(ctk.CTkTabview):
             CTkMessagebox(title="Error", message=f"An unexpected error occurred: {str(e)}", icon="cancel")
 
     def add_amino_acid(self):
-        '''Adds a new amino acid to the CSV file'''
+        """Adds a new amino acid to amino_acids.csv (AA, MW, Name)."""
         try:
-            # Get user input
             aa_code = self.entry_aa.get().strip()
             mw_text = self.entry_mw.get().strip()
             full_name = self.entry_name.get().strip()
 
-            # Validate input
             if not aa_code:
                 CTkMessagebox(title="Error", message="Please enter an amino acid code.", icon="cancel")
                 return
-
-            if not mw_text:
-                CTkMessagebox(title="Error", message="Please enter a molecular weight.", icon="cancel")
-                return
-
-            # Convert molecular weight to float
             try:
                 mw = float(mw_text)
             except ValueError:
                 CTkMessagebox(title="Error", message="Molecular weight must be a valid number.", icon="cancel")
                 return
-
-            # If no full name provided, create a default one
             if not full_name:
                 full_name = f"Fmoc-{aa_code}-OH; [0.40M]"
 
-            # Get CSV file path
-            csv_path = LoadFile.get_csv_path()
+            # Ensure CSV exists and has schema
+            csv_path = LoadFile.ensure_csv_schema()
 
-            # Check if CSV file exists
-            if not os.path.exists(csv_path):
-                CTkMessagebox(title="Error", message=f"CSV file not found: {csv_path}", icon="cancel")
-                return
-
-            # Load existing CSV
+            # Load, normalise columns/order
             df = pd.read_csv(csv_path)
+            for col in ['AA','MW','Name']:
+                if col not in df.columns:
+                    df[col] = pd.Series(dtype='object')
+            df = df[['AA','MW','Name']]
+            df['AA'] = df['AA'].astype(str).str.strip()
 
-            # Check if amino acid already exists
-            if aa_code in df['AA'].values:
-                result = CTkMessagebox(
-                    title="Amino Acid Exists", 
-                    message=f"Amino acid '{aa_code}' already exists. Do you want to update it?",
-                    icon="question",
-                    option_1="Yes",
-                    option_2="No"
-                )
-                if result.get() == "No":
-                    return
-                
-                # Update existing entry
-                df.loc[df['AA'] == aa_code, 'MW'] = mw
-                df.loc[df['AA'] == aa_code, 'Fmoc-Cys(Trt)-OH; [0.40M]'] = full_name
+            # Case-insensitive match on AA
+            mask = df['AA'].str.casefold() == aa_code.casefold()
+            if mask.any():
+                df.loc[mask, ['MW','Name']] = [mw, full_name]
                 action = "updated"
             else:
-                # Add new entry
-                new_row = {
-                    'AA': aa_code,
-                    'MW': mw,
-                    'Fmoc-Cys(Trt)-OH; [0.40M]': full_name
-                }
-                df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+                df = pd.concat([df, pd.DataFrame([{'AA': aa_code, 'MW': mw, 'Name': full_name}])],
+                            ignore_index=True)
                 action = "added"
 
-            # Save updated CSV
-            df.to_csv(csv_path, index=False)
+            # Atomic write to avoid partial/truncated files
+            tmp_path = csv_path + ".tmp"
+            df.to_csv(tmp_path, index=False)
+            os.replace(tmp_path, csv_path)
 
-            # Clear input fields
+            # Clear fields + UI feedback
             self.entry_aa.delete(0, 'end')
             self.entry_mw.delete(0, 'end')
             self.entry_name.delete(0, 'end')
 
-            # Show success message in output text
             self.output_text.delete("1.0", "end")
-            self.output_text.insert("end", f"Success! Amino acid '{aa_code}' has been {action}.\n")
-            self.output_text.insert("end", f"Code: {aa_code}\n")
-            self.output_text.insert("end", f"Molecular Weight: {mw}\n")
-            self.output_text.insert("end", f"Full Name: {full_name}\n\n")
-            self.output_text.insert("end", f"CSV file updated: {csv_path}")
+            self.output_text.insert("end", f"Success! Amino acid '{aa_code}' {action}.\n")
+            self.output_text.insert("end", f"CSV: {csv_path}")
+            CTkMessagebox(title="Success", message=f"Amino acid '{aa_code}' {action}.", icon="check")
 
-            CTkMessagebox(title="Success", message=f"Amino acid '{aa_code}' has been {action} successfully!", icon="check")
-
+        except PermissionError:
+            CTkMessagebox(
+                title="Error",
+                message="Can't write to amino_acids.csv (permission denied). "
+                        "Move the .exe and CSV to a writable folder (e.g., Desktop/Documents).",
+                icon="cancel"
+            )
         except Exception as e:
-            CTkMessagebox(title="Error", message=f"An unexpected error occurred: {str(e)}", icon="cancel")
+            CTkMessagebox(title="Error", message=f"Unexpected error: {e}", icon="cancel")
+
 
     def view_amino_acids(self):
-        '''Displays all current amino acids in the output text'''
         try:
-            csv_path = LoadFile.get_csv_path()
-            
-            if not os.path.exists(csv_path):
-                CTkMessagebox(title="Error", message=f"CSV file not found: {csv_path}", icon="cancel")
-                return
-
+            csv_path = LoadFile.ensure_csv_schema()
             df = pd.read_csv(csv_path)
-            
-            # Clear output and display amino acids
-            self.output_text.delete("1.0", "end")
-            self.output_text.insert("end", "Current Amino Acids:\n")
-            self.output_text.insert("end", "=" * 50 + "\n\n")
+            for col in ['AA','MW','Name']:
+                if col not in df.columns:
+                    df[col] = ""
 
-            for _, row in df.iterrows():
+            self.output_text.delete("1.0", "end")
+            self.output_text.insert("end", "Current Amino Acids:\n" + "="*50 + "\n\n")
+
+            for _, row in df[['AA','MW','Name']].iterrows():
                 self.output_text.insert("end", f"Code: {row['AA']}\n")
                 self.output_text.insert("end", f"MW: {row['MW']}\n")
-                if len(df.columns) > 2:  # If there's a third column with full names
-                    full_name_col = df.columns[0]  # Get the third column name
-                    self.output_text.insert("end", f"Name: {row[full_name_col]}\n")
-                self.output_text.insert("end", "-" * 30 + "\n")
+                self.output_text.insert("end", f"Name: {row['Name']}\n")
+                self.output_text.insert("end", "-"*30 + "\n")
 
             self.output_text.insert("end", f"\nTotal amino acids: {len(df)}")
             self.output_text.update_idletasks()
             self.output_text.see("end")
 
         except Exception as e:
-            CTkMessagebox(title="Error", message=f"An error occurred while loading amino acids: {str(e)}", icon="cancel")
-
+            CTkMessagebox(title="Error", message=f"Error loading amino acids: {e}", icon="cancel")
 
 class App(ctk.CTk):
     def __init__(self):

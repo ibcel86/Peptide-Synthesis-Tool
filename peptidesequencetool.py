@@ -9,24 +9,41 @@ from math import ceil
 from collections import Counter
 
 class LoadFile:
-    '''Loads csv file globally to be used in other functions and classes'''
     @classmethod
     def resource_path(cls, relative_path):
-        """Return the path to an external file located next to the .exe"""
         if getattr(sys, 'frozen', False):
             return os.path.join(os.path.dirname(sys.executable), relative_path)
         return os.path.join(os.path.dirname(__file__), relative_path)
-        
+
     @classmethod
     def get_csv_path(cls):
         return cls.resource_path("amino_acids.csv")
-        
+
+    @classmethod
+    def ensure_csv_schema(cls):
+        """Create or normalise amino_acids.csv to columns ['AA','MW','Name']."""
+        import pandas as pd
+        path = cls.get_csv_path()
+        if not os.path.exists(path):
+            pd.DataFrame(columns=['AA','MW','Name']).to_csv(path, index=False)
+            return path
+        df = pd.read_csv(path)
+        # add missing columns then reorder
+        for col in ['AA','MW','Name']:
+            if col not in df.columns:
+                df[col] = pd.Series(dtype='object')
+        df = df[['AA','MW','Name']]
+        df.to_csv(path, index=False)
+        return path
+
 class DataLoader:
-    '''Shared data access for amino acid information'''
     def __init__(self):
-        self.df = pd.read_csv(LoadFile.get_csv_path())
-        self.valid_amino_acids = set(self.df['AA'].str.strip())
+        path = LoadFile.ensure_csv_schema()
+        self.df = pd.read_csv(path)
+        self.df['AA'] = self.df['AA'].astype(str).str.strip()
+        self.valid_amino_acids = set(self.df['AA'])
         self.mw_dict = dict(zip(self.df['AA'], self.df['MW']))
+
 class CalculatePeptide:
     '''Validates user input and calculates peptide mass'''
     

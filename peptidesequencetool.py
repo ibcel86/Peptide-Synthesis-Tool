@@ -1,66 +1,105 @@
+"""
+peptidesequencetool.py
+
+Core logic for the Peptide Sequence Tool.
+
+This module provides classes for peptide sequence validation, molecular mass
+calculation, vial mapping, and synthesis plan generation. It also includes
+functionality for comparing old and modified sequences and updating vial plans
+accordingly.
+"""
+
+from __future__ import annotations
 import os
 import sys
-import token
-import pandas as pd
-import openpyxl
 import re
-from math import *
-from math import ceil
+from math import ceil, floor
 from collections import Counter
+from typing import Any, Dict, List, Tuple
+
+import pandas as pd
+
 
 class LoadFile:
+    """Utility class for handling resource file paths and ensuring CSV schema."""
+
     @classmethod
-    def resource_path(cls, relative_path):
-        if getattr(sys, 'frozen', False):
+    def resource_path(cls, relative_path: str) -> str:
+        """Return the absolute path to a resource, compatible with PyInstaller builds.
+
+        Args:
+            relative_path (str): Path relative to the script or executable.
+
+        Returns:
+            str: Absolute path to the resource.
+        """
+        if getattr(sys, "frozen", False):
             return os.path.join(os.path.dirname(sys.executable), relative_path)
         return os.path.join(os.path.dirname(__file__), relative_path)
 
     @classmethod
-    def get_csv_path(cls):
+    def get_csv_path(cls) -> str:
+        """Return the absolute path to the amino acid CSV file.
+
+        Returns:
+            str: Full path to amino_acids.csv.
+        """
         return cls.resource_path("amino_acids.csv")
 
     @classmethod
-    def ensure_csv_schema(cls):
-        """Create or normalise amino_acids.csv to columns ['AA','MW','Name']."""
-        import pandas as pd
+    def ensure_csv_schema(cls) -> str:
+        """Ensure `amino_acids.csv` exists and follows the expected schema.
+
+        If the file does not exist it is created with columns ['AA','MW','Name'].
+        Missing columns are added and the order is normalized when the file exists.
+
+        Returns:
+            str: Path to the validated or newly created CSV file.
+        """
         path = cls.get_csv_path()
         if not os.path.exists(path):
-            pd.DataFrame(columns=['AA','MW','Name']).to_csv(path, index=False)
+            pd.DataFrame(columns=["AA", "MW", "Name"]).to_csv(path, index=False)
             return path
+
         df = pd.read_csv(path)
-        # add missing columns then reorder
-        for col in ['AA','MW','Name']:
+        for col in ["AA", "MW", "Name"]:
             if col not in df.columns:
-                df[col] = pd.Series(dtype='object')
-        df = df[['AA','MW','Name']]
+                df[col] = pd.Series(dtype="object")
+        df = df[["AA", "MW", "Name"]]
         df.to_csv(path, index=False)
         return path
 
+
 class DataLoader:
-    def __init__(self):
+    """Load amino acid data from CSV into memory."""
+
+    def __init__(self) -> None:
         path = LoadFile.ensure_csv_schema()
-        self.df = pd.read_csv(path)
-        self.df['AA'] = self.df['AA'].astype(str).str.strip()
-        self.valid_amino_acids = set(self.df['AA'])
-        self.mw_dict = dict(zip(self.df['AA'], self.df['MW']))
+        self.df: pd.DataFrame = pd.read_csv(path)
+        self.df["AA"] = self.df["AA"].astype(str).str.strip()
+        self.valid_amino_acids: set[str] = set(self.df["AA"])
+        self.mw_dict: Dict[str, float] = dict(zip(self.df["AA"], self.df["MW"]))
+
 
 class CalculatePeptide:
-    '''Validates user input and calculates peptide mass'''
-    
-    def __init__(self):
-        self.data = DataLoader()
-        self.tokens = None
-        self.original_tokens = None 
+    """Validate peptide sequences and calculate molecular mass."""
 
-    def _tokenize_sequence(self, sequence):
+    def __init__(self) -> None:
+        self.data = DataLoader()
+        self.tokens: List[str] | None = None
+        self.original_tokens: List[str] | None = None
+
+    def _tokenize_sequence(self, sequence: str) -> List[str]:
+        """Tokenize a sequence using known amino acid codes.
+
+        Args:
+            sequence (str): Raw peptide sequence (no spaces).
+
+        Returns:
+            List[str]: Tokenized list of amino acids.
         """
-        Tokenize a sequence like 'TTPraCQ' into ['T','T','Pra','C','Q'] 
-        using known amino acids from self.data.valid_amino_acids.
-        """
-        valid_aas = sorted(self.data.valid_amino_acids, key=len, reverse=True)  
-        # sort longest → shortest, so "Pra" matches before "P"
-        
-        tokens = []
+        valid_aas = sorted(self.data.valid_amino_acids, key=len, reverse=True)
+        tokens: List[str] = []
         i = 0
         while i < len(sequence):
             match = None
@@ -70,18 +109,32 @@ class CalculatePeptide:
                     tokens.append(match)
                     i += len(match)
                     break
-            if not match:  # nothing matched → unknown amino acid
-                tokens.append(sequence[i])  
+            if not match:
+                tokens.append(sequence[i])
                 i += 1
         return tokens
-    
-    def validate_user_sequence(self, sequence):
-        """Validates user sequence. Allows no spaces. Splits into amino acids based on dictionary."""
 
+    def validate_user_sequence(self, sequence: str) -> Tuple[List[str], List[str], List[str]]:
+        """Validate and tokenize a user-provided sequence.
+
+        Sequence should contain no spaces and use one-letter or multi-letter
+        amino acid codes present in `amino_acids.csv`.
+
+        Args:
+            sequence (str): Peptide sequence without spaces.
+
+        Returns:
+            Tuple[List[str], List[str], List[str]]:
+                - tokens: sequence reversed for synthesis order
+                - original_tokens: original order tokens
+                - invalid_amino_acids: list of invalid tokens (if any)
+
+        Raises:
+            ValueError: If an invalid amino acid is encountered.
+        """
         sequence = sequence.strip()
-
         valid_aas = sorted(self.data.valid_amino_acids, key=len, reverse=True)
-        tokens = []
+        tokens: List[str] = []
         i = 0
 
         while i < len(sequence):
@@ -93,54 +146,72 @@ class CalculatePeptide:
                     i += len(aa)
                     break
             if not match:
-                raise ValueError(
-                    f"Invalid amino acid at position {i+1}: '{sequence[i:]}'"
-                )
+                raise ValueError(f"Invalid amino acid at position {i+1}: '{sequence[i:]}'")
 
         self.original_tokens = tokens
-        self.tokens = tokens[::-1]  # reverse for synthesis order
-
-        invalid_amino_acids = [
-            aa for aa in self.original_tokens if aa not in self.data.valid_amino_acids
-        ]
-
+        self.tokens = tokens[::-1]
+        invalid_amino_acids = [aa for aa in tokens if aa not in self.data.valid_amino_acids]
         return self.tokens, self.original_tokens, invalid_amino_acids
 
+    def calculate_sequence_mass(self, sequence: str) -> float:
+        """Calculate total molecular mass of a validated peptide sequence.
 
+        Args:
+            sequence (str): The validated peptide sequence (for clarity).
 
-    def calculate_sequence_mass(self, sequence):
-        """Calculate mass of the sequence using the loaded DataFrame"""
+        Returns:
+            float: Molecular mass in g/mol.
+
+        Raises:
+            ValueError: If no validated sequence has been loaded.
+        """
         if not self.tokens:
             raise ValueError("No sequence loaded. Run validate_user_sequence() first.")
-        
-        validated_sequence_mass = sum(self.data.mw_dict[aa] for aa in self.tokens)
-        return validated_sequence_mass
-       
-class BuildSynthesisPlan():
-    '''Calculates vial positions and rack assignments. Exports csv file that is read by the auto-reactor and auto-sampler
-    to synthesise the peptide'''
-    
-    def __init__(self, tokens, original_tokens=None):
-        self.data = DataLoader()
-        self.tokens = tokens  # This obtains the reversed sequence to ensure correct synthesis order
-        self.original_tokens = original_tokens or tokens  # Required original sequence order for some calculations
-        
-    def vial_rack_positions(self, tokens, conc=0.4, max_occurrence=6, max_volume=16, start_rack=1, start_position=1):
-        '''Generates vial map, checks position of previous map when compare sequences is run'''
+        return sum(self.data.mw_dict[aa] for aa in self.tokens)
 
+
+class BuildSynthesisPlan:
+    """Generate vial mappings and synthesis plans for automated peptide synthesis."""
+
+    def __init__(self, tokens: List[str], original_tokens: List[str] | None = None) -> None:
+        self.data = DataLoader()
+        self.tokens = tokens
+        self.original_tokens = original_tokens or tokens
+
+    def vial_rack_positions(
+        self,
+        tokens: List[str],
+        conc: float = 0.4,
+        max_occurrence: int = 6,
+        max_volume: int = 16,
+        start_rack: int = 1,
+        start_position: int = 1,
+    ) -> Tuple[pd.DataFrame, Dict[str, Tuple[int, int, int]]]:
+        """Generate vial map and rack positions.
+
+        Args:
+            tokens (List[str]): Amino acid tokens (synthesis order or otherwise).
+            conc (float): Stock concentration (M).
+            max_occurrence (int): Max occurrences per vial.
+            max_volume (int): Max vial volume (mL).
+            start_rack (int): Starting rack index.
+            start_position (int): Starting position index.
+
+        Returns:
+            Tuple[pd.DataFrame, dict]: DataFrame of vial map and mapping dict {name: (rack, pos, occ)}.
+        """
         amino_acid_occurrences = Counter(tokens)
         max_per_vial = floor(max_volume / 2.5)
-        output = []
-        vial_map = {} 
+        output: List[Dict[str, Any]] = []
+        vial_map: Dict[str, Tuple[int, int, int]] = {}
 
         rack = start_rack
         position = start_position
-        max_positions = 27 
+        max_positions = 27
 
         for aa, count in amino_acid_occurrences.items():
             mw = self.data.mw_dict[aa]
-
-            splits = []
+            splits: List[int] = []
             while count > 0:
                 chunk = min(count, max_per_vial)
                 splits.append(chunk)
@@ -148,80 +219,83 @@ class BuildSynthesisPlan():
 
             for i, split_count in enumerate(splits):
                 name = aa if i == 0 else f"{aa}{i+1}"
-                mmol_per_occurrence = (max_volume * conc) / max_occurrence
-                mmol = split_count * mmol_per_occurrence
+                mmol = split_count * ((max_volume * conc) / max_occurrence)
                 volume = split_count * 2.5
                 mass = mmol * mw / 1000
 
-                output.append({
-                    "Amino Acid": name,
-                    "Rack": rack,
-                    "Position": position,
-                    "Occurrences": split_count,
-                    "mmol": round(mmol, 2),
-                    "Mass (g)": round(mass, 2),
-                    "Volume (mL)": round(volume, 2)
-                })
-
+                output.append(
+                    {
+                        "Amino Acid": name,
+                        "Rack": rack,
+                        "Position": position,
+                        "Occurrences": split_count,
+                        "mmol": round(mmol, 2),
+                        "Mass (g)": round(mass, 2),
+                        "Volume (mL)": round(volume, 2),
+                    }
+                )
                 vial_map[name] = (rack, position, split_count)
-
                 position += 1
                 if position > max_positions:
                     rack += 1
                     position = 1
 
         return pd.DataFrame(output), vial_map
-    
-    def calculate_deprotection_vials_needed(self, max_volume=16, inject_vol=1.5):
-        '''Calculate the number of deprotection vials needed based on peptide length and max vial volume'''
 
+    def calculate_deprotection_vials_needed(self, max_volume: int = 16, inject_vol: float = 1.5) -> int:
+        """Calculate number of deprotection vials required.
+
+        Args:
+            max_volume (int): Maximum vial volume (mL).
+            inject_vol (float): Injection volume (mL).
+
+        Returns:
+            int: Number of deprotection vials.
+        """
         num_deprotection_steps = len(self.tokens)
         samples_per_vial = ceil(max_volume / inject_vol)
-        num_vials_needed= ceil(num_deprotection_steps/samples_per_vial)
-        
-        return num_vials_needed
-       
-    def build_synthesis_plan(self, vial_map, max_deprotection_volume=16):
-        '''Builds the synthesis plan using vial rack positions for amino acids and deprotection vials.
-        Outputs the .csv file which is uploaded to the auto-reactor and auto-sampler so the machine knows where and
-        when to pick up a vial.'''
-        # Calculate required deprotection vials automatically
+        return ceil(num_deprotection_steps / samples_per_vial)
+
+    def build_synthesis_plan(self, vial_map: Dict[str, Tuple[int, int, int]], max_deprotection_volume: int = 16) -> pd.DataFrame:
+        """Build a synthesis plan DataFrame based on vial mapping.
+
+        Args:
+            vial_map (dict): Mapping of amino acid name -> (rack, position, occurrences).
+            max_deprotection_volume (int): Max vial volume (mL).
+
+        Returns:
+            pd.DataFrame: Synthesis plan suitable for export.
+
+        Raises:
+            ValueError: If insufficient rack space exists for deprotection vials.
+        """
         num_deprotection_vials = self.calculate_deprotection_vials_needed(max_deprotection_volume)
-        
         deprotection_start_pos = 28
-        deprotection_rack = 2 # Deprotection vials are always in rack 2
-        rack2_start_pos = 28
         rack2_end_pos = 54
 
-        # Check if there are enough rack spaces for deprotection vials
         last_position_needed = deprotection_start_pos + num_deprotection_vials - 1
         if last_position_needed > rack2_end_pos:
             available_positions = rack2_end_pos - deprotection_start_pos + 1
             raise ValueError(
-            f"ERROR: Not enough rack space for deprotection vials!\n"
-            f"Rack 2 has positions {rack2_start_pos}-{rack2_end_pos}.\n"
-            f"Need {num_deprotection_vials} vials but only {available_positions} positions available.\n"
-            f"Insufficient rack space for required deprotection vials")
+                f"Not enough rack space for deprotection vials. Need {num_deprotection_vials}, available {available_positions}."
+            )
 
-        synthesis_rows = []
-        vial_usage_counter = {}
+        synthesis_rows: List[Dict[str, Any]] = []
+        vial_usage_counter: Dict[str, int] = {}
         deprotection_usage_counter = 0
-
-        # Builds a list of deprotection vial positions
         deprotection_positions = [deprotection_start_pos + i for i in range(num_deprotection_vials)]
         uses_per_deprotection_vial = ceil(len(self.tokens) / num_deprotection_vials)
 
-        # Position numbers based on synthesis order
         for synthesis_position, aa in enumerate(self.tokens, 1):
-            
-            # Gets relevant vial(s)
-            related_vials = [v for v in vial_map.keys() if v == aa or (v.startswith(aa) and v[len(aa):].isdigit())]
+            related_vials = [
+                v for v in vial_map.keys() if v == aa or (v.startswith(aa) and v[len(aa):].isdigit())
+            ]
             related_vials.sort(key=lambda x: (0 if x == aa else int(x[len(aa):])))
 
-            deprotection_vial_index = deprotection_usage_counter // uses_per_deprotection_vial
-            if deprotection_vial_index >= len(deprotection_positions):
-                deprotection_vial_index = len(deprotection_positions) - 1
-
+            deprotection_vial_index = min(
+                deprotection_usage_counter // uses_per_deprotection_vial,
+                len(deprotection_positions) - 1,
+            )
             current_deprotection_pos = deprotection_positions[deprotection_vial_index]
 
             assigned = False
@@ -231,61 +305,56 @@ class BuildSynthesisPlan():
 
                 if used < occ:
                     vial_usage_counter[vial_name] = used + 1
-
-                    # Amino acid step - numbered by synthesis order
-                    synthesis_rows.append({
-                        "NAME": f"{aa}{synthesis_position}",
-                        "FLOW RATE A (ml/min)": 0.889,
-                        "FLOW RATE B (ml/min)": 0.444,
-                        "FLOW RATE D (ml/min)": 0,
-                        "RESIDENCE 2": True,
-                        "AUTOSAMPLER SITE A": pos,
-                        "REAGENT CONC A (M)": 0.1,
-                        "AUTOSAMPLER SITE B": current_deprotection_pos,
-                        "REAGENT CONC B (M)": 0.24,
-                        "DO NOT FILL": False,
-                        "REAGENT USE (ml)": 4,
-                        "REACTOR TEMPERATURE 2 (C)": 75,
-                        "REACTOR TEMPERATURE 3 (C)": 75,
-                        "WHOLE PEAK": False,
-                        "DO NOT COLLECT": True,
-                        "CLEANING FLOW RATE (ml/min)": 2,
-                        "MANUAL CLEAN (ml)": 4
-                    })
-
-                    # Get the deprotection vial position from the previous row
-                    previous_deprotection_position = synthesis_rows[-1]["AUTOSAMPLER SITE B"]
-
-                    # Deprotection step - numbered by synthesis order
-                    synthesis_rows.append({
-                        "NAME": f"deprotection {synthesis_position}",
-                        "FLOW RATE A (ml/min)": 0,
-                        "FLOW RATE B (ml/min)": 0,
-                        "FLOW RATE D (ml/min)": 0.8,
-                        "RESIDENCE 2": True,
-                        "AUTOSAMPLER SITE A": pos,
-                        "REAGENT CONC A (M)": 0.1,
-                        "AUTOSAMPLER SITE B": previous_deprotection_position,
-                        "REAGENT CONC B (M)": 0.1,
-                        "DO NOT FILL": False,
-                        "REAGENT USE (ml)": 4,
-                        "REACTOR TEMPERATURE 2 (C)": 75,
-                        "REACTOR TEMPERATURE 3 (C)": 75,
-                        "WHOLE PEAK": False,
-                        "DO NOT COLLECT": True,
-                        "CLEANING FLOW RATE (ml/min)": 2,
-                        "MANUAL CLEAN (ml)": 4
-                    })
-                    
+                    synthesis_rows.append(
+                        {
+                            "NAME": f"{aa}{synthesis_position}",
+                            "FLOW RATE A (ml/min)": 0.889,
+                            "FLOW RATE B (ml/min)": 0.444,
+                            "FLOW RATE D (ml/min)": 0,
+                            "RESIDENCE 2": True,
+                            "AUTOSAMPLER SITE A": pos,
+                            "REAGENT CONC A (M)": 0.1,
+                            "AUTOSAMPLER SITE B": current_deprotection_pos,
+                            "REAGENT CONC B (M)": 0.24,
+                            "DO NOT FILL": False,
+                            "REAGENT USE (ml)": 4,
+                            "REACTOR TEMPERATURE 2 (C)": 75,
+                            "REACTOR TEMPERATURE 3 (C)": 75,
+                            "WHOLE PEAK": False,
+                            "DO NOT COLLECT": True,
+                            "CLEANING FLOW RATE (ml/min)": 2,
+                            "MANUAL CLEAN (ml)": 4,
+                        }
+                    )
+                    synthesis_rows.append(
+                        {
+                            "NAME": f"deprotection {synthesis_position}",
+                            "FLOW RATE A (ml/min)": 0,
+                            "FLOW RATE B (ml/min)": 0,
+                            "FLOW RATE D (ml/min)": 0.8,
+                            "RESIDENCE 2": True,
+                            "AUTOSAMPLER SITE A": pos,
+                            "REAGENT CONC A (M)": 0.1,
+                            "AUTOSAMPLER SITE B": current_deprotection_pos,
+                            "REAGENT CONC B (M)": 0.1,
+                            "DO NOT FILL": False,
+                            "REAGENT USE (ml)": 4,
+                            "REACTOR TEMPERATURE 2 (C)": 75,
+                            "REACTOR TEMPERATURE 3 (C)": 75,
+                            "WHOLE PEAK": False,
+                            "DO NOT COLLECT": True,
+                            "CLEANING FLOW RATE (ml/min)": 2,
+                            "MANUAL CLEAN (ml)": 4,
+                        }
+                    )
                     deprotection_usage_counter += 1
                     assigned = True
                     break
 
             if not assigned:
-                print(f"Warning: Could not assign vial for amino acid {aa}")
-                for name in [f"ERROR_{aa}", f"ERROR_deprotection_{synthesis_position}"]:
-                    synthesis_rows.append({
-                        "NAME": name,
+                synthesis_rows.append(
+                    {
+                        "NAME": f"ERROR_{aa}",
                         "FLOW RATE A (ml/min)": 0,
                         "FLOW RATE B (ml/min)": 0,
                         "FLOW RATE D (ml/min)": 0,
@@ -301,67 +370,80 @@ class BuildSynthesisPlan():
                         "WHOLE PEAK": False,
                         "DO NOT COLLECT": True,
                         "CLEANING FLOW RATE (ml/min)": 0,
-                        "MANUAL CLEAN (ml)": 0
-                    })
+                        "MANUAL CLEAN (ml)": 0,
+                    }
+                )
 
-        df_synthesis_plan = pd.DataFrame(synthesis_rows)
-        return df_synthesis_plan
+        return pd.DataFrame(synthesis_rows)
+
 
 class CompareSequences:
-    '''Class loads old csv files so scientists can change the peptide sequence, eg: if they substitute
-    amino acids, this class runs logic to compare the sequences, finds the different amino acids (eg Pra in place of K)
-    and appends the new vial to the end of the rack. The synthesis plan is also modified and saved as a new csv file along
-    with the vial map.'''
+    """Compare and update vial maps / synthesis plans after sequence modifications."""
 
-    def __init__(self, builder_instance, old_synthesis_path, old_vial_path):
+    def __init__(self, builder_instance: BuildSynthesisPlan, old_synthesis_path: str, old_vial_path: str) -> None:
         self.builder = builder_instance
         self.old_synthesis_path = old_synthesis_path
         self.old_vial_path = old_vial_path
-        self.tokens = None
-        self.original_tokens = None
-        self.data = DataLoader()  # make sure this exists
+        self.tokens: List[str] | None = None
+        self.original_tokens: List[str] | None = None
+        self.data = DataLoader()
 
-    def extract_old_sequence_from_csv(self):
-        """Loads old sequence from user-selected synthesis plan CSV."""
+    def extract_old_sequence_from_csv(self) -> List[str]:
+        """Extract old peptide sequence tokens from an existing synthesis plan CSV.
+
+        Returns:
+            List[str]: Tokens from the old sequence in forward order.
+
+        Raises:
+            FileNotFoundError: If the synthesis plan file cannot be found.
+        """
         if not os.path.exists(self.old_synthesis_path):
             raise FileNotFoundError("Synthesis plan not found, please ensure the file is accessible.")
 
         df = pd.read_csv(self.old_synthesis_path)
-        df.columns = df.columns.str.strip()  # remove whitespace from headers
-
-        aa_rows = df[~df['NAME'].str.contains('deprotection', case=False, na=False)]
-        cleaned_tokens = [re.sub(r'\d+$', '', name.strip()) for name in aa_rows['NAME']]
+        df.columns = df.columns.str.strip()
+        aa_rows = df[~df["NAME"].str.contains("deprotection", case=False, na=False)]
+        cleaned_tokens = [re.sub(r"\d+$", "", name.strip()) for name in aa_rows["NAME"]]
         self.original_tokens = cleaned_tokens[::-1]
         return cleaned_tokens
 
-    def compare_sequences(self, cleaned_tokens, new_aa):
-        """Returns amino acids in new sequence that differ from old sequence."""
-        differences = []
+    def compare_sequences(self, cleaned_tokens: List[str], new_aa: List[str]) -> List[str]:
+        """Return amino acids present in the new sequence that differ from the old.
 
-        for old, new in zip(cleaned_tokens, new_aa):
-            if old != new:
-                differences.append(new)
+        Args:
+            cleaned_tokens (List[str]): Tokens from the old sequence (forward order).
+            new_aa (List[str]): Tokens from the new sequence (forward order).
 
-        # If new_aa is longer than cleaned_tokens, add the extra amino acids
+        Returns:
+            List[str]: Amino acids that need to be added to the vial map.
+        """
+        differences: List[str] = [new for old, new in zip(cleaned_tokens, new_aa) if old != new]
         if len(new_aa) > len(cleaned_tokens):
             differences.extend(new_aa[len(cleaned_tokens):])
-
         return differences
 
-    def build_new_vial_map(self, new_aa):
-        """Builds updated vial map using user-selected old vial map CSV."""
+    def build_new_vial_map(self, new_aa: List[str]) -> pd.DataFrame:
+        """Build an updated vial map by appending new amino acids to the existing vial map CSV.
+
+        Args:
+            new_aa (List[str]): New amino acids that should be added.
+
+        Returns:
+            pd.DataFrame: Combined DataFrame of the old and new vial mappings.
+
+        Raises:
+            FileNotFoundError: If the old vial map CSV cannot be found.
+        """
         if not os.path.exists(self.old_vial_path):
             raise FileNotFoundError("Vial map not found. Please ensure the file is accessible.")
 
         df_old = pd.read_csv(self.old_vial_path)
         df_old.columns = df_old.columns.str.strip()
 
-        # Find last rack and position
-        last_row = df_old.loc[df_old['Rack'].idxmax()]
-        last_rack = last_row['Rack']
-        last_position = df_old[df_old['Rack'] == last_rack]['Position'].max()
+        last_row = df_old.loc[df_old["Rack"].idxmax()]
+        last_rack = int(last_row["Rack"])
+        last_position = int(df_old[df_old["Rack"] == last_rack]["Position"].max())
 
-        # Compute starting rack and position
         max_positions = 27
         max_per_vial = 6
         if last_position >= max_positions:
@@ -371,11 +453,10 @@ class CompareSequences:
             start_rack = last_rack
             start_position = last_position + 1
 
-        # Map existing amino acids to highest index
         pattern = re.compile(r"^([A-Za-z]+)(\d+)?$")
-        aa_max_index = {}
+        aa_max_index: Dict[str, int] = {}
         for name in df_old["Amino Acid"]:
-            match = pattern.match(name)
+            match = pattern.match(str(name))
             if match:
                 base = match.group(1)
                 idx = int(match.group(2)) if match.group(2) else 1
@@ -384,7 +465,7 @@ class CompareSequences:
         cleaned_new_aa = [aa.replace("*", "") for aa in new_aa]
         new_occurrences = Counter(cleaned_new_aa)
 
-        output = []
+        output: List[Dict[str, Any]] = []
         rack = start_rack
         position = start_position
 
@@ -394,7 +475,7 @@ class CompareSequences:
 
             total_count = new_occurrences[aa]
             new_occurrences[aa] = 0
-            splits = []
+            splits: List[int] = []
             while total_count > 0:
                 chunk = min(total_count, max_per_vial)
                 splits.append(chunk)
@@ -404,20 +485,22 @@ class CompareSequences:
 
             for i, split_count in enumerate(splits):
                 suffix = "" if start_index == 0 and i == 0 else str(start_index + i + 1)
-                name = aa + suffix
+                name = f"{aa}{suffix}"
                 mmol = split_count * (16 * 0.4) / 6
-                mass = mmol * self.data.mw_dict[aa] / 1000
+                mass = mmol * self.data.mw_dict.get(aa, 0) / 1000
                 volume = split_count * 2.5
 
-                output.append({
-                    "Amino Acid": name,
-                    "Rack": rack,
-                    "Position": position,
-                    "Occurrences": split_count,
-                    "mmol": round(mmol, 2),
-                    "Mass (g)": round(mass, 2),
-                    "Volume (mL)": round(volume, 2)
-                })
+                output.append(
+                    {
+                        "Amino Acid": name,
+                        "Rack": rack,
+                        "Position": position,
+                        "Occurrences": split_count,
+                        "mmol": round(mmol, 2),
+                        "Mass (g)": round(mass, 2),
+                        "Volume (mL)": round(volume, 2),
+                    }
+                )
 
                 position += 1
                 if position > max_positions:
@@ -428,12 +511,18 @@ class CompareSequences:
         df_combined = pd.concat([df_old, df_new], ignore_index=True)
         return df_combined
 
-    def build_new_synthesis_plan(self, df_combined):
-        vial_map = {
-            row["Amino Acid"]: (row["Rack"], row["Position"], row["Occurrences"])
+    def build_new_synthesis_plan(self, df_combined: pd.DataFrame) -> pd.DataFrame:
+        """Build a new synthesis plan DataFrame using the updated combined vial map.
+
+        Args:
+            df_combined (pd.DataFrame): Combined vial map (old + appended new).
+
+        Returns:
+            pd.DataFrame: Updated synthesis plan.
+        """
+        vial_map: Dict[str, Tuple[int, int, int]] = {
+            row["Amino Acid"]: (int(row["Rack"]), int(row["Position"]), int(row["Occurrences"]))
             for _, row in df_combined.iterrows()
         }
-        builder = BuildSynthesisPlan(self.tokens, self.original_tokens)
-        df_synthesis_plan = builder.build_synthesis_plan(vial_map)
-        return df_synthesis_plan
-
+        builder = BuildSynthesisPlan(self.tokens or [], self.original_tokens or [])
+        return builder.build_synthesis_plan(vial_map)

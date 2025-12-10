@@ -2,7 +2,7 @@
 
 When developing novel peptide compounds in drug discovery, scientists often manually calculate the concentration, volume, and mass of each amino acid in a sequence. While this is manageable for short peptides, longer chains (e.g., 100+ mers) make the process error-prone and time-consuming — a single miscalculation can result in weeks of lost work.
 
-The **Sequence Calculator** is a simple but powerful tool that allows scientists to input a peptide sequence and receive an Excel (or CSV) output containing all the data needed to synthesise their peptide on an automated peptide synthesiser.
+The **Peptide Sequence Tool** is a simple but powerful tool that allows scientists to input a peptide sequence and receive an Excel (or CSV) output containing all the data needed to synthesise their peptide on an automated peptide synthesiser.
 
 ---
 
@@ -82,7 +82,7 @@ Version 2 introduces significant upgrades:
 
 If you want to create a working .exe, follow these instructions:
 
-1. Place main.py and sequence_calculator.py (or the relevant updated files) into the same directory.
+1. Place main.py and peptidesequencetool.py (or the relevant updated files) into the same directory.
 2. Open your terminal or command prompt and navigate to that direction:
     cd path_to_your_directory
 3. Make sure you have python installed and added to your system PATH

@@ -132,7 +132,11 @@ class CalculatePeptide:
         Raises:
             ValueError: If an invalid amino acid is encountered.
         """
+    def validate_user_sequence(self, sequence: str) -> Tuple[List[str], List[str], List[str]]:
+        
         sequence = sequence.strip()
+        sequence = re.sub(r'[^A-Za-z]', '', sequence)
+
         valid_aas = sorted(self.data.valid_amino_acids, key=len, reverse=True)
         tokens: List[str] = []
         i = 0

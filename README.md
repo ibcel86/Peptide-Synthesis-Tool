@@ -44,7 +44,7 @@ For example, if the amino acid `T` appears **8 times**, the system will split it
 
 - **Single-letter codes** and **custom 3-letter codes** are both supported  
 
-## ⚙Internal Logic (Function Overview)
+## Internal Logic (Function Overview)
 
 - resource_path(): Ensures `amino_acid.csv` is found when running as `.exe`
 - validate_sequence(): Validates sequence against the amino acid database

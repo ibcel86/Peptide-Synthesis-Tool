@@ -11,6 +11,7 @@ management. It integrates with the backend logic defined in
 
 from __future__ import annotations
 import os
+import re
 import pandas as pd
 import customtkinter as ctk
 from customtkinter import filedialog
@@ -178,9 +179,8 @@ class TabView(ctk.CTkTabview):
         """Compare modified and previous peptide sequences, updating vial/synthesis plans."""
         try:
             new_sequence = self.entry_modify.get()
-            if " " not in new_sequence:
-                CTkMessagebox(title="Error", message="Add spaces between amino acids.", icon="cancel")
-                return
+            cleaned = re.sub(r'[^A-Za-z]', '', new_sequence)
+
 
             calc = CalculatePeptide()
             tokens, calc.original_tokens, invalid_amino_acids = calc.validate_user_sequence(

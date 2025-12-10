@@ -1,4 +1,4 @@
-# The Sequence Calculator
+# The Peptide Sequence Tool
 
 When developing novel peptide compounds in drug discovery, scientists often manually calculate the concentration, volume, and mass of each amino acid in a sequence. While this is manageable for short peptides, longer chains (e.g., 100+ mers) make the process error-prone and time-consuming — a single miscalculation can result in weeks of lost work.
 

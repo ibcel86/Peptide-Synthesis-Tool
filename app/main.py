@@ -16,8 +16,7 @@ import pandas as pd
 import customtkinter as ctk
 from customtkinter import filedialog
 from CTkMessagebox import CTkMessagebox
-
-from peptidesequencetool import CalculatePeptide, BuildSynthesisPlan, LoadFile, CompareSequences
+from app.peptidesequencetool import CalculatePeptide, BuildSynthesisPlan, LoadFile, CompareSequences
 
 
 class TabView(ctk.CTkTabview):

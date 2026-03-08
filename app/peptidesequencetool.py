@@ -16,7 +16,6 @@ import re
 from math import ceil, floor
 from collections import Counter
 from typing import Any, Dict, List, Tuple
-
 import pandas as pd
 
 
@@ -379,7 +378,6 @@ class BuildSynthesisPlan:
                 )
 
         return pd.DataFrame(synthesis_rows)
-
 
 class CompareSequences:
     """Compare and update vial maps / synthesis plans after sequence modifications."""

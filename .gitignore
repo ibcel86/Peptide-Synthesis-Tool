@@ -1,22 +1,33 @@
-# Ignore virtual environment
+# Virtual environments
 venv/
-# Ignore test folders
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Build artefacts
+build/
+dist/
+*.egg-info/
+
+# PyInstaller
+*.spec
+
+# IDE / editor files
+.vscode/
+*.code-workspace
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Environment files
+*.env
+
+# Project specific folders
 Sequences Test/
 Archive/
 Archive Files/
 Versions/
-# Ignore Python cache files
-**__pycache__**/
-*.py[cod]
-*.pyo
-# Ignore OS junk
-.DS_Store
-Thumbs.db
-# Ignore IDE/editor config
-.vscode/
-*.code-workspace
-# Ignore env/secret files
-*.env
-# Ignore files
-*.txt
-
+test_sequences/

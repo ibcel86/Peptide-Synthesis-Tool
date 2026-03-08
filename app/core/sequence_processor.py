@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List, Tuple
 from app.io.csv_loader import DataLoader
 
-class CalculatePeptide:
+class ValidatePeptide:
     """Validate peptide sequences and calculate molecular mass."""
 
     def __init__(self) -> None:

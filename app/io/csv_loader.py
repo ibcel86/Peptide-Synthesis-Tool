@@ -12,10 +12,11 @@ class LoadFile:
 
     @classmethod
     def resource_path(cls, relative_path: str) -> str:
-        """Return absolute path to a resource, compatible with PyInstaller builds."""
         if getattr(sys, "frozen", False):
-            return os.path.join(os.path.dirname(sys.executable), relative_path)
-        return os.path.join(os.path.dirname(__file__), relative_path)
+            base_path = os.path.dirname(sys.executable)
+        else:
+            base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        return os.path.join(base_path, relative_path)
 
     @classmethod
     def get_csv_path(cls) -> str:

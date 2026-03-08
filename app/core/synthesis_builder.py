@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Tuple
 import pandas as pd
 from app.io.csv_loader import DataLoader
 
+
 class BuildSynthesisPlan:
     """Generate vial mappings and synthesis plans for automated peptide synthesis."""
 
@@ -22,19 +23,7 @@ class BuildSynthesisPlan:
         start_rack: int = 1,
         start_position: int = 1,
     ) -> Tuple[pd.DataFrame, Dict[str, Tuple[int, int, int]]]:
-        """Generate vial map and rack positions.
-
-        Args:
-            tokens (List[str]): Amino acid tokens (synthesis order or otherwise).
-            conc (float): Stock concentration (M).
-            max_occurrence (int): Max occurrences per vial.
-            max_volume (int): Max vial volume (mL).
-            start_rack (int): Starting rack index.
-            start_position (int): Starting position index.
-
-        Returns:
-            Tuple[pd.DataFrame, dict]: DataFrame of vial map and mapping dict {name: (rack, pos, occ)}.
-        """
+        """Generate vial map and rack positions."""
         amino_acid_occurrences = Counter(tokens)
         max_per_vial = floor(max_volume / 2.5)
         output: List[Dict[str, Any]] = []
@@ -45,8 +34,9 @@ class BuildSynthesisPlan:
         max_positions = 27
 
         for aa, count in amino_acid_occurrences.items():
-            mw = self.data.mw_dict[aa]
+            mw = self.data.amino_acids[aa].molecular_weight
             splits: List[int] = []
+
             while count > 0:
                 chunk = min(count, max_per_vial)
                 splits.append(chunk)
@@ -70,6 +60,7 @@ class BuildSynthesisPlan:
                     }
                 )
                 vial_map[name] = (rack, position, split_count)
+
                 position += 1
                 if position > max_positions:
                     rack += 1
@@ -77,33 +68,22 @@ class BuildSynthesisPlan:
 
         return pd.DataFrame(output), vial_map
 
-    def calculate_deprotection_vials_needed(self, max_volume: int = 16, inject_vol: float = 1.5) -> int:
-        """Calculate number of deprotection vials required.
-
-        Args:
-            max_volume (int): Maximum vial volume (mL).
-            inject_vol (float): Injection volume (mL).
-
-        Returns:
-            int: Number of deprotection vials.
-        """
+    def calculate_deprotection_vials_needed(
+        self,
+        max_volume: int = 16,
+        inject_vol: float = 1.5,
+    ) -> int:
+        """Calculate number of deprotection vials required."""
         num_deprotection_steps = len(self.tokens)
         samples_per_vial = ceil(max_volume / inject_vol)
         return ceil(num_deprotection_steps / samples_per_vial)
 
-    def build_synthesis_plan(self, vial_map: Dict[str, Tuple[int, int, int]], max_deprotection_volume: int = 16) -> pd.DataFrame:
-        """Build a synthesis plan DataFrame based on vial mapping.
-
-        Args:
-            vial_map (dict): Mapping of amino acid name -> (rack, position, occurrences).
-            max_deprotection_volume (int): Max vial volume (mL).
-
-        Returns:
-            pd.DataFrame: Synthesis plan suitable for export.
-
-        Raises:
-            ValueError: If insufficient rack space exists for deprotection vials.
-        """
+    def build_synthesis_plan(
+        self,
+        vial_map: Dict[str, Tuple[int, int, int]],
+        max_deprotection_volume: int = 16,
+    ) -> pd.DataFrame:
+        """Build a synthesis plan DataFrame based on vial mapping."""
         num_deprotection_vials = self.calculate_deprotection_vials_needed(max_deprotection_volume)
         deprotection_start_pos = 28
         rack2_end_pos = 54
@@ -112,7 +92,8 @@ class BuildSynthesisPlan:
         if last_position_needed > rack2_end_pos:
             available_positions = rack2_end_pos - deprotection_start_pos + 1
             raise ValueError(
-                f"Not enough rack space for deprotection vials. Need {num_deprotection_vials}, available {available_positions}."
+                f"Not enough rack space for deprotection vials. Need {num_deprotection_vials}, "
+                f"available {available_positions}."
             )
 
         synthesis_rows: List[Dict[str, Any]] = []
@@ -123,7 +104,8 @@ class BuildSynthesisPlan:
 
         for synthesis_position, aa in enumerate(self.tokens, 1):
             related_vials = [
-                v for v in vial_map.keys() if v == aa or (v.startswith(aa) and v[len(aa):].isdigit())
+                v for v in vial_map.keys()
+                if v == aa or (v.startswith(aa) and v[len(aa):].isdigit())
             ]
             related_vials.sort(key=lambda x: (0 if x == aa else int(x[len(aa):])))
 

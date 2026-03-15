@@ -48,7 +48,7 @@ Example:
 ---
 
 ## Project Structure
-
+```text
 app/
 ├── core/
 │ ├── sequence_processor.py
@@ -66,9 +66,7 @@ app/
 │
 tests/
 └── unit tests for core logic
-
-
----
+```
 
 ## Core Modules
 

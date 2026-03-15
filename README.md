@@ -1,3 +1,5 @@
+![Tests](https://github.com/ibcel86/peptide-synthesis-tool/actions/workflows/tests.yml/badge.svg)
+
 # Peptide Synthesis Tool
 
 A Python application for generating automated peptide synthesis plans and vial maps for flow-based peptide synthesizers.
